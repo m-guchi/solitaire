@@ -4,15 +4,24 @@
   <meta charset="UTF-8">
   <script>
     (function () {
-      var path = location.pathname;
-      var base;
-      if (path.endsWith('/')) {
-        base = path;
-      } else {
+      function getBasePath() {
+        var path = location.pathname;
+        if (path.endsWith('/')) return path;
         var last = path.split('/').pop() || '';
-        base = /\.[a-z0-9]+$/i.test(last) ? path.replace(/\/[^/]*$/, '/') : path + '/';
+        return /\.[a-z0-9]+$/i.test(last) ? path.replace(/\/[^/]*$/, '/') : path + '/';
       }
-      document.write('<base href="' + base.replace(/"/g, '%22') + '">');
+      var basePath = getBasePath();
+      window.assetUrl = function (rel) {
+        return location.origin + basePath + String(rel).replace(/^\.\//, '');
+      };
+      function write(tag) {
+        document.write(tag);
+      }
+      write('<link rel="icon" href="' + assetUrl('icons/favicon.ico?v=5') + '" sizes="any">');
+      write('<link rel="icon" href="' + assetUrl('icons/favicon-32.png?v=5') + '" type="image/png" sizes="32x32">');
+      write('<link rel="apple-touch-icon" href="' + assetUrl('icons/apple-touch-icon.png?v=5') + '">');
+      write('<link rel="manifest" href="' + assetUrl('manifest.webmanifest') + '">');
+      write('<link rel="stylesheet" href="' + assetUrl('styles.css?v=65') + '">');
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -21,18 +30,13 @@
   <meta name="theme-color" content="#1a472a">
   <meta name="apple-mobile-web-app-title" content="Solitaire">
   <title>Solitaire</title>
-  <link rel="icon" href="icons/favicon.ico?v=4" sizes="any">
-  <link rel="icon" href="icons/favicon-32.png?v=4" type="image/png" sizes="32x32">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=4">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=65">
 </head>
 <body>
   <div id="app">
     <header class="header">
       <div class="header-top">
         <h1 class="app-title">
-          <img class="app-title-icon" src="icons/favicon-32.png?v=4" width="20" height="20" alt="">
+          <img class="app-title-icon" width="20" height="20" alt="">
           <span>Solitaire</span>
         </h1>
         <div class="stats">
@@ -112,11 +116,15 @@
       <div class="overlay-content start-content">
         <div class="start-brand">
           <div class="start-logo" aria-hidden="true">
-            <img class="start-logo-svg" src="icons/icon-192.png?v=4" width="88" height="88" alt="">
+            <img class="start-logo-svg" width="88" height="88" alt="">
           </div>
           <h2 id="start-title">Solitaire</h2>
           <p class="start-tagline">Klondike</p>
         </div>
+        <script>
+          document.querySelector('.app-title-icon').src = assetUrl('icons/favicon-32.png?v=5');
+          document.querySelector('.start-logo-svg').src = assetUrl('icons/icon-192.png?v=5');
+        </script>
         <div class="start-play-actions">
           <button type="button" id="btn-resume" class="btn btn-start-play hidden">
             <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
@@ -265,6 +273,13 @@
     </div>
   </div>
 
-  <script type="module" src="js/game.js?v=58"></script>
+  <script>
+    (function () {
+      var script = document.createElement('script');
+      script.type = 'module';
+      script.src = assetUrl('js/game.js?v=58');
+      document.body.appendChild(script);
+    })();
+  </script>
 </body>
 </html>
