@@ -1,8 +1,8 @@
-'use strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const fs = require('fs');
-const path = require('path');
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
 const pkgPath = path.join(root, 'package.json');
 const changelogPath = path.join(root, 'js', 'changelog.js');
