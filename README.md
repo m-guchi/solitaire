@@ -43,7 +43,21 @@ GitHub リポジトリには **1つだけ** シークレットを登録します
 1. `DEPLOY_PATH` のディレクトリを作成し、Web サーバーから読み取り可能にする
 2. Apache の場合、`DEPLOY_PATH` を DocumentRoot または Alias で公開する
 
-例（サブパス `/solitaire/` で公開する場合）:
+**本番（推奨）:** サブドメイン直下に公開する場合（例: `https://klondike.game.gucchii.com/`）、`DEPLOY_PATH` をその VirtualHost の DocumentRoot に設定します。
+
+```apache
+<VirtualHost *:443>
+  ServerName klondike.game.gucchii.com
+  DocumentRoot /var/www/klondike.game.gucchii.com
+  <Directory /var/www/klondike.game.gucchii.com>
+    Options -Indexes
+    AllowOverride All
+    Require all granted
+  </Directory>
+</VirtualHost>
+```
+
+**別パターン:** 既存サイトのサブパス（例: `/solitaire/`）で公開する場合:
 
 ```apache
 Alias /solitaire /var/www/html/solitaire
@@ -54,12 +68,12 @@ Alias /solitaire /var/www/html/solitaire
 </Directory>
 ```
 
-サブドメインで公開する場合は、`DEPLOY_PATH` をその VirtualHost の DocumentRoot に設定してください。
+**注意:** サーバー側で `/icons` に Alias 等が設定されていると、アイコンだけ 404 になることがあります（`js/` や `styles.css` は正常）。本リポジトリではアイコンを `assets/` に配置しています。
 
 ## デプロイの流れ
 
 1. `npm run build` で `package.json` のバージョンを `js/changelog.js` に同期
-2. 静的ファイル（`index.html`, `styles.css`, `js/`, `icons/` など）を `dist/` にまとめる
+2. 静的ファイル（`index.html`, `styles.css`, `js/`, `assets/` など）を `dist/` にまとめる
 3. rsync でサーバーの `DEPLOY_PATH` へ転送（`--delete` で古いファイルを削除）
 
 ## スクリプト
@@ -68,4 +82,4 @@ Alias /solitaire /var/www/html/solitaire
 | :--- | :--- |
 | `npm run dev` | ローカル開発サーバー（ポート 8080） |
 | `npm run build` | バージョン同期（CI / デプロイ前） |
-| `npm run icons` | `icons/icon.svg` から favicon / PWA アイコンを生成 |
+| `npm run icons` | `assets/icon.svg` から favicon / PWA アイコンを生成 |

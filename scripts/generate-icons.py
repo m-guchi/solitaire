@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rasterize icons/icon.svg to PNG (same renderer as typical browser SVG)."""
+"""Rasterize assets/icon.svg to PNG (same renderer as typical browser SVG)."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ except ImportError:
     sys.exit(1)
 
 ROOT = Path(__file__).resolve().parent.parent
-ICONS = ROOT / 'icons'
+ICONS = ROOT / 'assets'
 SVG = ICONS / 'icon.svg'
 
 SIZES = [
@@ -39,7 +39,7 @@ def main() -> None:
             output_height=size,
             background_color='#1a472a',
         )
-        print(f'wrote icons/{name} ({size}x{size})')
+        print(f'wrote assets/{name} ({size}x{size})')
 
     favicon = ICONS / 'favicon.ico'
     try:
@@ -54,7 +54,7 @@ def main() -> None:
             check=True,
             capture_output=True,
         )
-        print('wrote icons/favicon.ico')
+        print('wrote assets/favicon.ico')
     except (FileNotFoundError, subprocess.CalledProcessError):
         print('skipped favicon.ico (ImageMagick convert unavailable)')
 
