@@ -1,0 +1,16 @@
+{
+  "name": "solitaire",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "dev": "python3 -m http.server 8080",
+    "build": "node scripts/sync-version.js",
+    "icons": "bash scripts/generate-icons.sh",
+    "version:sync": "node scripts/sync-version.js",
+    "version": "node scripts/sync-version.js",
+    "release:patch": "npm version patch --no-git-tag-version",
+    "release:minor": "npm version minor --no-git-tag-version",
+    "release:major": "npm version major --no-git-tag-version"
+  }
+}

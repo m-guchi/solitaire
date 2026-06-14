@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a472a">
+  <meta name="apple-mobile-web-app-title" content="Solitaire">
+  <title>Solitaire</title>
+  <link rel="icon" href="icons/favicon.ico?v=3" sizes="any">
+  <link rel="icon" href="icons/favicon-32.png?v=3" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css?v=65">
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-top">
+        <h1 class="app-title">
+          <img class="app-title-icon" src="icons/icon.svg?v=3" width="20" height="20" alt="">
+          <span>Solitaire</span>
+        </h1>
+        <div class="stats">
+          <span id="stat-moves">0 手</span>
+          <span class="stats-sep" aria-hidden="true">·</span>
+          <span id="stat-time">00:00</span>
+          <span id="stat-score-wrap" class="hidden">
+            <span class="stats-sep" aria-hidden="true">·</span>
+            <span id="stat-score">$0</span>
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <main class="board">
+      <section class="top-row">
+        <div class="pile foundation-pile" data-pile="foundation-0" data-suit="hearts" aria-label="ハート">
+          <div class="pile-inner"></div>
+        </div>
+        <div class="pile foundation-pile" data-pile="foundation-1" data-suit="diamonds" aria-label="ダイヤ">
+          <div class="pile-inner"></div>
+        </div>
+        <div class="pile foundation-pile" data-pile="foundation-2" data-suit="clubs" aria-label="クラブ">
+          <div class="pile-inner"></div>
+        </div>
+        <div class="pile foundation-pile" data-pile="foundation-3" data-suit="spades" aria-label="スペード">
+          <div class="pile-inner"></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="pile waste-pile" data-pile="waste" aria-label="捨て札">
+          <div class="pile-inner"></div>
+        </div>
+        <div class="pile stock-pile" data-pile="stock" aria-label="山札">
+          <div class="pile-inner"></div>
+        </div>
+      </section>
+
+      <section class="tableau">
+        <div class="pile tableau-pile" data-pile="tableau-0"><div class="pile-inner"></div></div>
+        <div class="pile tableau-pile" data-pile="tableau-1"><div class="pile-inner"></div></div>
+        <div class="pile tableau-pile" data-pile="tableau-2"><div class="pile-inner"></div></div>
+        <div class="pile tableau-pile" data-pile="tableau-3"><div class="pile-inner"></div></div>
+        <div class="pile tableau-pile" data-pile="tableau-4"><div class="pile-inner"></div></div>
+        <div class="pile tableau-pile" data-pile="tableau-5"><div class="pile-inner"></div></div>
+        <div class="pile tableau-pile" data-pile="tableau-6"><div class="pile-inner"></div></div>
+      </section>
+    </main>
+
+    <div id="auto-complete-bar" class="auto-complete-bar hidden">
+      <button type="button" id="btn-auto-complete" class="btn btn-auto">組札へ自動配置する</button>
+    </div>
+
+    <nav class="bottom-nav" aria-label="ゲームメニュー">
+      <button type="button" id="btn-new" class="bottom-nav-btn" aria-label="新しいゲーム" disabled>
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.99 5.99 0 01-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        <span class="bottom-nav-label">新しいゲーム</span>
+      </button>
+      <button type="button" id="btn-undo" class="bottom-nav-btn" aria-label="戻る" disabled>
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.5 8c-2.65 0-5.05 1.04-6.9 2.72L3 8v8h8l-2.62-2.62c1.39-1.16 3.16-1.85 5.12-1.85 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        <span class="bottom-nav-label">戻る</span>
+      </button>
+      <button type="button" id="btn-records" class="bottom-nav-btn" aria-label="記録">
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+        <span class="bottom-nav-label">記録</span>
+      </button>
+      <button type="button" id="btn-ranking" class="bottom-nav-btn" aria-label="ランキング">
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
+        <span class="bottom-nav-label">ランキング</span>
+      </button>
+      <button type="button" id="btn-settings" class="bottom-nav-btn" aria-label="設定">
+        <svg class="bottom-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.05-.67-1.65-.89l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.6.22-1.15.51-1.65.89l-2.39-.96a.488.488 0 00-.59.22L2.74 8.87a.489.489 0 00.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.05.67 1.65.89l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.6-.22 1.15-.51 1.65-.89l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <span class="bottom-nav-label">設定</span>
+      </button>
+    </nav>
+
+    <div id="start-overlay" class="overlay" role="dialog" aria-labelledby="start-title">
+      <div class="overlay-content start-content">
+        <div class="start-brand">
+          <div class="start-logo" aria-hidden="true">
+            <img class="start-logo-svg" src="icons/icon.svg?v=3" width="88" height="88" alt="">
+          </div>
+          <h2 id="start-title">Solitaire</h2>
+          <p class="start-tagline">Klondike</p>
+        </div>
+        <div class="start-play-actions">
+          <button type="button" id="btn-resume" class="btn btn-start-play hidden">
+            <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+            <span class="btn-start-play-label">続きから再開</span>
+          </button>
+          <p id="start-resume-hint" class="start-resume-hint hidden"></p>
+          <button type="button" id="btn-start-new" class="btn btn-start-play btn-start-play--new">
+            <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <span class="btn-start-play-label">新しく始める</span>
+          </button>
+        </div>
+        <div class="start-actions">
+          <button type="button" id="btn-start-records" class="btn btn-start-secondary">
+            <svg class="start-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+            記録
+          </button>
+          <button type="button" id="btn-start-ranking" class="btn btn-start-secondary">
+            <svg class="start-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
+            ランキング
+          </button>
+          <button type="button" id="btn-start-settings" class="btn btn-start-secondary">
+            <svg class="start-action-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.05-.67-1.65-.89l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.6.22-1.15.51-1.65.89l-2.39-.96a.488.488 0 00-.59.22L2.74 8.87a.489.489 0 00.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.05.67 1.65.89l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.6-.22 1.15-.51 1.65-.89l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            設定
+          </button>
+        </div>
+        <button type="button" id="start-version" class="start-version" aria-label="更新履歴を表示"></button>
+      </div>
+    </div>
+
+    <div id="win-overlay" class="overlay hidden" role="dialog" aria-labelledby="win-title">
+      <div class="overlay-content">
+        <h2 id="win-title">おめでとう！</h2>
+        <p id="win-stats"></p>
+        <button type="button" id="btn-play-again" class="btn btn-play-again">もう一度</button>
+      </div>
+    </div>
+
+    <div id="ranking-overlay" class="overlay hidden" role="dialog" aria-labelledby="ranking-title">
+      <div class="overlay-content overlay-content--ranking">
+        <h2 id="ranking-title">ランキング</h2>
+        <div class="ranking-tabs" role="tablist" aria-label="並び替え">
+          <button type="button" class="ranking-tab is-active" data-sort="time" role="tab" aria-selected="true">所要時間</button>
+          <button type="button" class="ranking-tab" data-sort="moves" role="tab" aria-selected="false">手数</button>
+        </div>
+        <div class="ranking-list-wrap">
+          <ol id="ranking-list" class="ranking-list"></ol>
+          <p id="ranking-empty" class="ranking-empty hidden">まだ記録がありません</p>
+        </div>
+        <button type="button" id="btn-ranking-close" class="btn btn-overlay-close">閉じる</button>
+      </div>
+    </div>
+
+    <div id="records-overlay" class="overlay hidden" role="dialog" aria-labelledby="records-title">
+      <div class="overlay-content overlay-content--records">
+        <h2 id="records-title">記録</h2>
+        <ul id="records-by-mode" class="records-mode-list"></ul>
+        <div class="records-actions">
+          <button type="button" id="btn-records-close" class="btn btn-overlay-close">閉じる</button>
+          <div class="records-reset-block">
+            <button type="button" id="btn-records-reset" class="btn btn-records-reset">記録をリセット</button>
+            <p class="records-reset-hint">記録とランキングの両方がリセットされます</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="settings-overlay" class="overlay hidden" role="dialog" aria-labelledby="settings-title">
+      <div class="overlay-content overlay-content--settings">
+        <h2 id="settings-title">設定</h2>
+        <ul class="settings-list">
+          <li class="setting-row">
+            <span class="setting-label">サウンド</span>
+            <div class="setting-controls">
+              <button type="button" class="setting-help-btn" data-setting-help="sound" aria-label="サウンドの説明">
+                <svg class="setting-help-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              </button>
+              <label class="setting-switch">
+                <input type="checkbox" id="setting-sound">
+                <span class="setting-switch-ui" aria-hidden="true"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-row">
+            <span class="setting-label">ベガスモード</span>
+            <div class="setting-controls">
+              <button type="button" class="setting-help-btn" data-setting-help="vegas" aria-label="ベガスモードの説明">
+                <svg class="setting-help-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              </button>
+              <label class="setting-switch">
+                <input type="checkbox" id="setting-vegas">
+                <span class="setting-switch-ui" aria-hidden="true"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-row hidden" id="setting-cumulative-row">
+            <span class="setting-label">累計ベガスモード</span>
+            <div class="setting-controls">
+              <button type="button" class="setting-help-btn" data-setting-help="cumulativeVegas" aria-label="累計ベガスモードの説明">
+                <svg class="setting-help-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              </button>
+              <label class="setting-switch">
+                <input type="checkbox" id="setting-cumulative-vegas">
+                <span class="setting-switch-ui" aria-hidden="true"></span>
+              </label>
+            </div>
+          </li>
+          <li class="setting-cumulative-panel hidden" id="setting-cumulative-panel">
+            <div class="setting-vegas-score-row">
+              <span class="setting-vegas-score-label">累計スコア</span>
+              <span id="setting-vegas-score-value" class="setting-vegas-score-value">$0</span>
+            </div>
+            <button type="button" id="btn-vegas-score-reset" class="btn-setting-reset">点数をリセット</button>
+          </li>
+          <li class="setting-row">
+            <span class="setting-label">簡単移動</span>
+            <div class="setting-controls">
+              <button type="button" class="setting-help-btn" data-setting-help="easyMove" aria-label="簡単移動の説明">
+                <svg class="setting-help-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              </button>
+              <label class="setting-switch">
+                <input type="checkbox" id="setting-easy-move">
+                <span class="setting-switch-ui" aria-hidden="true"></span>
+              </label>
+            </div>
+          </li>
+        </ul>
+        <button type="button" id="btn-settings-close" class="btn btn-overlay-close">閉じる</button>
+      </div>
+    </div>
+
+    <div id="setting-help-overlay" class="overlay hidden" role="dialog" aria-labelledby="setting-help-title">
+      <div class="overlay-content overlay-content--setting-help">
+        <h2 id="setting-help-title"></h2>
+        <p id="setting-help-body" class="setting-help-body"></p>
+        <button type="button" id="btn-setting-help-close" class="btn btn-primary">閉じる</button>
+      </div>
+    </div>
+    <div id="changelog-overlay" class="overlay hidden" role="dialog" aria-labelledby="changelog-title">
+      <div class="overlay-content overlay-content--changelog">
+        <h2 id="changelog-title">更新履歴</h2>
+        <div class="changelog-list-wrap">
+          <ol id="changelog-list" class="changelog-list"></ol>
+        </div>
+        <button type="button" id="btn-changelog-close" class="btn btn-primary">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/game.js?v=58"></script>
+</body>
+</html>

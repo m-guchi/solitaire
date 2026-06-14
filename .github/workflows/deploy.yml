@@ -1,0 +1,52 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load secrets from 1Password
+        uses: 1password/load-secrets-action@v4
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          OP_ENV_FILE: .github/deploy.env.tpl
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare deploy bundle
+        run: |
+          mkdir -p dist
+          cp index.html styles.css manifest.webmanifest dist/
+          cp -r js icons dist/
+          cp deploy/.htaccess dist/.htaccess
+
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ env.SSH_PRIVATE_KEY }}
+          ARGS: "-rlDzvc -i --delete"
+          SOURCE: "dist/"
+          REMOTE_HOST: ${{ env.SSH_HOST }}
+          REMOTE_USER: ${{ env.SSH_USERNAME }}
+          TARGET: ${{ env.DEPLOY_PATH }}
+          REMOTE_PORT: ${{ env.SSH_PORT }}
