@@ -39,6 +39,9 @@ jobs:
           cp index.html styles.css manifest.webmanifest dist/
           cp -r js icons dist/
           cp deploy/.htaccess dist/.htaccess
+          test -f dist/icons/icon-192.png
+          test -f dist/icons/icon-512.png
+          test -f dist/icons/favicon-32.png
 
       - name: Deploy to Server
         uses: easingthemes/ssh-deploy@main
