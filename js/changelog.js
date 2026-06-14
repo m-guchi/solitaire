@@ -1,5 +1,5 @@
 /** package.json の version が正。npm version / npm run release:* で自動同期される */
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.1';
 
 /**
  * アプリ内「更新履歴」に表示するデータ。
@@ -11,6 +11,13 @@ export const APP_VERSION = '1.0.0';
  * 新しい順。リリース時に先頭へ追記してください。
  */
 export const CHANGELOG = [
+  {
+    version: '1.0.1',
+    date: '2026-06-14',
+    changes: [
+      'スタート画面と PWA のアイコンが正しく表示されるよう修正',
+    ],
+  },
   {
     version: '1.0.0',
     date: '2026-06-15',
