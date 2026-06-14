@@ -2,15 +2,28 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <script>
+    (function () {
+      var path = location.pathname;
+      var base;
+      if (path.endsWith('/')) {
+        base = path;
+      } else {
+        var last = path.split('/').pop() || '';
+        base = /\.[a-z0-9]+$/i.test(last) ? path.replace(/\/[^/]*$/, '/') : path + '/';
+      }
+      document.write('<base href="' + base.replace(/"/g, '%22') + '">');
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#1a472a">
   <meta name="apple-mobile-web-app-title" content="Solitaire">
   <title>Solitaire</title>
-  <link rel="icon" href="icons/favicon.ico?v=3" sizes="any">
-  <link rel="icon" href="icons/favicon-32.png?v=3" type="image/png" sizes="32x32">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
+  <link rel="icon" href="icons/favicon.ico?v=4" sizes="any">
+  <link rel="icon" href="icons/favicon-32.png?v=4" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=4">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css?v=65">
 </head>
@@ -19,7 +32,7 @@
     <header class="header">
       <div class="header-top">
         <h1 class="app-title">
-          <img class="app-title-icon" src="icons/icon.svg?v=3" width="20" height="20" alt="">
+          <img class="app-title-icon" src="icons/favicon-32.png?v=4" width="20" height="20" alt="">
           <span>Solitaire</span>
         </h1>
         <div class="stats">
@@ -99,7 +112,7 @@
       <div class="overlay-content start-content">
         <div class="start-brand">
           <div class="start-logo" aria-hidden="true">
-            <img class="start-logo-svg" src="icons/icon.svg?v=3" width="88" height="88" alt="">
+            <img class="start-logo-svg" src="icons/icon-192.png?v=4" width="88" height="88" alt="">
           </div>
           <h2 id="start-title">Solitaire</h2>
           <p class="start-tagline">Klondike</p>
