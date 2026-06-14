@@ -1,5 +1,9 @@
 # Static Solitaire site — disable directory listing and block dotfiles.
 Options -Indexes
+DirectoryIndex index.html
+
+AddType image/svg+xml .svg
+AddType application/manifest+json .webmanifest
 
 <IfModule mod_authz_core.c>
   <FilesMatch "^\.">
