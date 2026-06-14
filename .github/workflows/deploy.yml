@@ -37,11 +37,11 @@ jobs:
         run: |
           mkdir -p dist
           cp index.html styles.css manifest.webmanifest dist/
-          cp -r js icons dist/
+          cp -r js assets dist/
           cp deploy/.htaccess dist/.htaccess
-          test -f dist/icons/icon-192.png
-          test -f dist/icons/icon-512.png
-          test -f dist/icons/favicon-32.png
+          test -f dist/assets/icon-192.png
+          test -f dist/assets/icon-512.png
+          test -f dist/assets/favicon-32.png
 
       - name: Deploy to Server
         uses: easingthemes/ssh-deploy@main
