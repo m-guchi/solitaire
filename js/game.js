@@ -14,6 +14,7 @@ import {
   SUITS,
   createDeck,
   shuffle,
+  cardColor,
   canPlaceOnTableau,
   canPlaceOnFoundation,
   parsePileId,
