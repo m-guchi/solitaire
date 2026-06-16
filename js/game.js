@@ -10,10 +10,9 @@ import {
 } from './save.js';
 import { loadSettings, saveSettings, loadVegasScore, saveVegasScore, SETTING_HELP } from './settings.js';
 import { APP_VERSION, CHANGELOG, formatChangelogDate } from './changelog.js';
+import { selectDealLayout } from './deal-quality.js';
 import {
   SUITS,
-  createDeck,
-  shuffle,
   cardColor,
   canPlaceOnTableau,
   canPlaceOnFoundation,
@@ -48,7 +47,7 @@ class SolitaireGame {
     this.clearState();
     this.vegasMode = options.vegasMode ?? false;
     this.score = 0;
-    this.deal();
+    this.deal(options);
   }
 
   beginVegasRound(options = {}) {
@@ -61,16 +60,20 @@ class SolitaireGame {
     this.score = prev - 52;
   }
 
-  deal() {
-    const deck = shuffle(createDeck());
-    for (let col = 0; col < 7; col++) {
-      for (let row = 0; row <= col; row++) {
-        const card = deck.pop();
-        card.faceUp = row === col;
-        this.tableau[col].push(card);
-      }
-    }
-    this.stock = deck.map((c) => ({ ...c, faceUp: false }));
+  deal(options = {}) {
+    const layout = selectDealLayout({
+      vegasMode: options.vegasMode ?? this.vegasMode,
+      cumulativeVegas: options.cumulativeVegas ?? false,
+      storedVegasScore: options.storedVegasScore ?? 0,
+    });
+    this.applyDealLayout(layout);
+  }
+
+  applyDealLayout(layout) {
+    this.tableau = layout.tableau.map((pile) => pile.map((c) => ({ ...c })));
+    this.stock = layout.stock.map((c) => ({ ...c }));
+    this.waste = [];
+    this.foundations = [[], [], [], []];
   }
 
   snapshot() {
