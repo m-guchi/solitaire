@@ -1873,6 +1873,59 @@ class SolitaireUI {
     });
   }
 
+  playStockRecycleAnimation(card, fromRect, toRect) {
+    return new Promise((resolve) => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        resolve();
+        return;
+      }
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'stock-draw-anim';
+      wrapper.style.width = `${fromRect.width}px`;
+      wrapper.style.height = `${fromRect.height}px`;
+      wrapper.style.left = `${fromRect.left}px`;
+      wrapper.style.top = `${fromRect.top}px`;
+
+      const flipper = document.createElement('div');
+      flipper.className = 'stock-draw-anim-flipper';
+      flipper.style.transform = 'rotateY(180deg)';
+
+      const back = createCardEl({ ...card, faceUp: false }, 'anim', 0);
+      const front = createCardEl({ ...card, faceUp: true }, 'anim', 0);
+      for (const el of [back, front]) {
+        el.style.position = 'absolute';
+        el.style.left = '0';
+        el.style.top = '0';
+        el.style.width = '100%';
+        el.style.height = '100%';
+      }
+      front.classList.add('stock-draw-anim-front');
+
+      flipper.append(back, front);
+      wrapper.append(flipper);
+      document.body.appendChild(wrapper);
+
+      const duration = STOCK_DRAW_DURATION;
+      const toLeft = toRect.left + (toRect.width - fromRect.width) / 2;
+      const toTop = toRect.top + (toRect.height - fromRect.height) / 2;
+
+      requestAnimationFrame(() => {
+        this.sounds.playFlip();
+        wrapper.style.transition = `left ${duration}ms ${STOCK_DRAW_EASING}, top ${duration}ms ${STOCK_DRAW_EASING}`;
+        flipper.style.transition = `transform ${duration}ms ${STOCK_DRAW_EASING}`;
+        wrapper.style.left = `${toLeft}px`;
+        wrapper.style.top = `${toTop}px`;
+        flipper.style.transform = 'rotateY(0deg)';
+      });
+
+      setTimeout(() => {
+        wrapper.remove();
+        resolve();
+      }, duration + 40);
+    });
+  }
+
   async animateDrawFromStock() {
     if (this.animatingStock || this.animatingDeal || this.autoCompleting || this.animatingMove) return false;
 
@@ -1881,8 +1934,31 @@ class SolitaireUI {
     if (g.stock.length === 0 && g.vegasMode) return false;
 
     if (g.stock.length === 0) {
+      const card = { ...g.waste[g.waste.length - 1] };
+      const fromRect = this.getPileCardRect('waste');
+      const toRect = this.getPileInnerRect('stock');
+      if (!fromRect || !toRect) return false;
+
+      this.animatingStock = true;
+      document.body.classList.add('is-stock-animating');
+
       g.drawFromStock();
       this.clearSelection();
+
+      const skipAnim = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (skipAnim) {
+        this.render();
+        document.body.classList.remove('is-stock-animating');
+        this.animatingStock = false;
+        return true;
+      }
+
+      this.renderPile('waste', []);
+      this.renderPile('stock', [], { stockDisplayCount: g.stock.length });
+
+      await this.playStockRecycleAnimation(card, fromRect, toRect);
+      document.body.classList.remove('is-stock-animating');
+      this.animatingStock = false;
       this.render();
       return true;
     }
@@ -2038,13 +2114,27 @@ class SolitaireUI {
 
     if (pileId === 'stock') {
       const count = options.stockDisplayCount ?? cards.length;
+      const canRecycle = cards.length === 0
+        && this.game.waste.length > 0
+        && !this.game.vegasMode;
+      const stockPileEl = pileEl.closest('.stock-pile');
+      if (stockPileEl) {
+        stockPileEl.classList.toggle('stock-pile--recyclable', canRecycle);
+        stockPileEl.setAttribute('aria-label', canRecycle ? '山札を戻す' : '山札');
+      }
       if (cards.length) {
         const el = createCardEl(cards[cards.length - 1], pileId, cards.length - 1);
         pileEl.appendChild(el);
+      } else if (canRecycle) {
+        const hint = document.createElement('div');
+        hint.className = 'stock-recycle-hint';
+        hint.setAttribute('aria-hidden', 'true');
+        hint.innerHTML = '<svg class="stock-recycle-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 9.74C4.46 10.97 4 12.43 4 14c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>';
+        pileEl.appendChild(hint);
       }
       const countEl = document.createElement('span');
       countEl.className = 'stock-count';
-      countEl.textContent = String(count);
+      countEl.textContent = String(canRecycle ? this.game.waste.length : count);
       pileEl.appendChild(countEl);
       return;
     }
