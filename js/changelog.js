@@ -1,5 +1,5 @@
 /** package.json の version が正。npm version / npm run release:* で自動同期される */
-export const APP_VERSION = '1.0.4';
+export const APP_VERSION = '1.1.0';
 
 /**
  * アプリ内「更新履歴」に表示するデータ。
@@ -11,6 +11,15 @@ export const APP_VERSION = '1.0.4';
  * 新しい順。リリース時に先頭へ追記してください。
  */
 export const CHANGELOG = [
+  {
+    version: '1.1.0',
+    date: '2026-06-16',
+    changes: [
+      '累計ベガスモードでゲームモードを変更しても累計スコアが保持される',
+      '累計ベガススコアがマイナスのとき、よりプレイしやすい配札を選ぶ',
+      '山札が空のとき、山札に戻す操作のヒント表示とアニメーションを追加',
+    ],
+  },
   {
     version: '1.0.4',
     date: '2026-06-15',
