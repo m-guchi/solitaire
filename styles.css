@@ -419,6 +419,35 @@ body.is-dragging .card.face-up {
   font-size: calc(var(--card-width) * 0.2);
 }
 
+.stock-pile--recyclable .pile-inner {
+  cursor: pointer;
+}
+
+.stock-recycle-hint {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(var(--card-width), 100%);
+  height: var(--card-height);
+  border-radius: var(--card-radius);
+  border: 2px dashed rgba(255, 255, 255, 0.55);
+  background: linear-gradient(135deg, rgba(43, 108, 176, 0.45) 0%, rgba(26, 74, 138, 0.45) 50%, rgba(43, 108, 176, 0.45) 100%);
+  background-size: 8px 8px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 2px 4px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.stock-recycle-icon {
+  width: calc(var(--card-width) * 0.4);
+  height: calc(var(--card-width) * 0.4);
+  color: rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+}
+
 .waste-pile .pile-inner {
   overflow: visible;
 }

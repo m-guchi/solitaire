@@ -1,11 +1,11 @@
 {
   "name": "solitaire",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "python3 -m http.server 8080",
-    "dev": "python3 -m http.server 8080",
+    "start": "python3 -m http.server 8080 --bind 0.0.0.0",
+    "dev": "bash scripts/dev.sh",
     "test": "node --test tests",
     "build": "node scripts/sync-version.js",
     "icons": "bash scripts/generate-icons.sh",
