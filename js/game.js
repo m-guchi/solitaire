@@ -952,14 +952,19 @@ class SolitaireUI {
     if (!this.settings.vegasMode) {
       this.settings.cumulativeVegas = false;
     }
+    if (
+      prevCumulative &&
+      !this.settings.cumulativeVegas &&
+      this.gameStarted &&
+      this.game.vegasMode
+    ) {
+      saveVegasScore(this.game.score);
+    }
     saveSettings(this.settings);
     this.sounds.enabled = this.settings.soundEnabled;
     this.game.vegasMode = this.settings.vegasMode;
     this.settingCumulativeRow.classList.toggle('hidden', !this.settings.vegasMode);
     this.settingCumulativeVegas.checked = this.settings.cumulativeVegas;
-    if (prevCumulative && !this.settings.cumulativeVegas) {
-      saveVegasScore(0);
-    }
     this.updateVegasScorePanel();
     this.updateScoreDisplay();
     if (this.gameStarted) {
