@@ -11,7 +11,11 @@ export const DEAL_DIFFICULTY_SCORE_TARGETS = {
 };
 
 const MAX_SEARCH_ATTEMPTS = 200;
-const SCORE_MATCH_TOLERANCE = 2;
+/** 候補をランダム選択したときの見積もり点数の目標標準偏差 */
+export const TARGET_SCORE_STDEV = 8;
+/** 一様分布で標準偏差 s になる半幅: s * sqrt(3) */
+export const SCORE_BAND_HALF_WIDTH = TARGET_SCORE_STDEV * Math.sqrt(3);
+const MIN_BAND_CANDIDATES = 2;
 
 function cloneCard(card) {
   return { ...card };
@@ -296,23 +300,31 @@ export function selectDealLayout({ vegasMode = false, dealDifficulty = 'normal' 
   }
 
   const scoreTarget = getDealDifficultyScoreTarget(dealDifficulty);
-  const targetMoves = foundationMovesFromVegasScore(scoreTarget);
+  const bandCandidates = [];
   let best = null;
-  let bestDistance = Infinity;
+  let bestScoreDistance = Infinity;
 
   for (let attempts = 0; attempts < MAX_SEARCH_ATTEMPTS; attempts++) {
     const candidate = evaluateShuffledDeal(vegasMode);
-    const distance = Math.abs(candidate.moves - targetMoves);
-    if (distance < bestDistance) {
-      bestDistance = distance;
+    const estimatedScore = estimateVegasScoreFromFoundationMoves(candidate.moves);
+    const scoreDistance = Math.abs(estimatedScore - scoreTarget);
+
+    if (scoreDistance < bestScoreDistance) {
+      bestScoreDistance = scoreDistance;
       best = candidate;
     }
-    const scoreDistance = Math.abs(
-      estimateVegasScoreFromFoundationMoves(candidate.moves) - scoreTarget,
-    );
-    if (scoreDistance <= SCORE_MATCH_TOLERANCE) {
-      return candidate.layout;
+
+    if (scoreDistance <= SCORE_BAND_HALF_WIDTH) {
+      bandCandidates.push(candidate);
     }
+  }
+
+  if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+    return bandCandidates[Math.floor(Math.random() * bandCandidates.length)].layout;
+  }
+
+  if (bandCandidates.length > 0) {
+    return bandCandidates[0].layout;
   }
 
   return best.layout;

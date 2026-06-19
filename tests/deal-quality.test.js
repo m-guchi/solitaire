@@ -8,6 +8,7 @@ import {
   foundationMovesFromVegasScore,
   getDealDifficultyScoreTarget,
   DEAL_DIFFICULTY_SCORE_TARGETS,
+  SCORE_BAND_HALF_WIDTH,
 } from '../js/deal-quality.js';
 import { createDeck } from '../js/rules.js';
 
@@ -37,6 +38,11 @@ describe('deal difficulty scoring', () => {
     assert.equal(getDealDifficultyScoreTarget('hard'), -25);
     assert.equal(getDealDifficultyScoreTarget('veryHard'), null);
   });
+
+  it('uses a score band sized for roughly target stdev 8', () => {
+    assert.ok(SCORE_BAND_HALF_WIDTH > 13);
+    assert.ok(SCORE_BAND_HALF_WIDTH < 15);
+  });
 });
 
 describe('selectDealLayout', () => {
@@ -52,5 +58,14 @@ describe('selectDealLayout', () => {
     const easyScore = estimateVegasScoreFromFoundationMoves(countFoundationMoves(easyLayout, true));
     const hardScore = estimateVegasScoreFromFoundationMoves(countFoundationMoves(hardLayout, true));
     assert.ok(easyScore > hardScore);
+  });
+
+  it('varies hard deals within the score band', () => {
+    const scores = new Set();
+    for (let i = 0; i < 6; i++) {
+      const layout = selectDealLayout({ vegasMode: true, dealDifficulty: 'hard' });
+      scores.add(estimateVegasScoreFromFoundationMoves(countFoundationMoves(layout, true)));
+    }
+    assert.ok(scores.size > 1);
   });
 });
