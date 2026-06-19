@@ -162,11 +162,10 @@ export function createDealDifficultyControl(root, { onInput, onChange } = {}) {
 
   const setIndex = (nextIndex, { save = false } = {}) => {
     const clamped = Math.max(0, Math.min(maxIndex, Number(nextIndex)));
-    const changed = clamped !== index;
     index = clamped;
     updateVisual(index);
     onInput?.(index);
-    if (save && changed) onChange?.(index);
+    if (save) onChange?.(index);
     return index;
   };
 
@@ -204,6 +203,7 @@ export function createDealDifficultyControl(root, { onInput, onChange } = {}) {
     if (track.hasPointerCapture(event.pointerId)) {
       track.releasePointerCapture(event.pointerId);
     }
+    onChange?.(index);
   });
 
   ticks.forEach((tick) => {
