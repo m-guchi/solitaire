@@ -671,7 +671,7 @@ class SolitaireUI {
     this.btnStartRecords.addEventListener('click', () => this.openRecordsOverlay());
     this.btnStartRanking.addEventListener('click', () => this.openRankingOverlay());
     this.btnStartSettings.addEventListener('click', () => this.openSettingsOverlay());
-    this.startVersion.addEventListener('click', () => this.openChangelogOverlay());
+    this.startVersion?.addEventListener('click', () => this.openChangelogOverlay());
     this.btnChangelogClose.addEventListener('click', () => this.closeOverlay(this.changelogOverlay));
     this.btnRecords.addEventListener('click', () => this.openRecordsOverlay());
     this.btnNew.addEventListener('click', () => {
