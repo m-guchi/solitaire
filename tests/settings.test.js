@@ -4,6 +4,7 @@ import {
   createDealDifficultyControl,
   getDealDifficultyIndexFromRatio,
   getDealDifficultyThumbPercent,
+  hasPendingGameModeChange,
   DEAL_DIFFICULTY_OPTIONS,
   getDealDifficultyIndex,
   getDealDifficultyLabel,
@@ -35,5 +36,28 @@ describe('deal difficulty slider helpers', () => {
     assert.equal(getDealDifficultyIndexFromRatio(0.24), 0);
     assert.equal(getDealDifficultyIndexFromRatio(0.25), 1);
     assert.equal(getDealDifficultyIndexFromRatio(1), 3);
+  });
+
+  it('detects pending game mode changes during an active game', () => {
+    const settings = {
+      vegasMode: true,
+      cumulativeVegas: false,
+      dealDifficulty: 'hard',
+    };
+    const game = {
+      vegasMode: false,
+      cumulativeVegas: false,
+      dealDifficulty: 'normal',
+    };
+    assert.equal(hasPendingGameModeChange(settings, game, { gameStarted: false }), false);
+    assert.equal(hasPendingGameModeChange(settings, game, { gameStarted: true }), true);
+    assert.equal(
+      hasPendingGameModeChange(
+        { ...settings, vegasMode: false, dealDifficulty: 'normal' },
+        game,
+        { gameStarted: true },
+      ),
+      false,
+    );
   });
 });

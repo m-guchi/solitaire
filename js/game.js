@@ -17,6 +17,9 @@ import {
   SETTING_HELP,
   getDealDifficultyValue,
   getDealDifficultyLabel,
+  getActiveGameMode,
+  hasPendingGameModeChange,
+  PENDING_GAME_MODE_NOTICE,
 } from './settings.js';
 import { APP_VERSION, CHANGELOG, formatChangelogDate } from './changelog.js';
 import { initAppUpdate } from './app-update.js';
@@ -50,6 +53,8 @@ class SolitaireGame {
     this.won = false;
     this.lastFlip = false;
     this.vegasMode = false;
+    this.cumulativeVegas = false;
+    this.dealDifficulty = 'normal';
     this.score = 0;
     this.vegasCumulativeBase = 0;
   }
@@ -57,6 +62,8 @@ class SolitaireGame {
   reset(options = {}) {
     this.clearState();
     this.vegasMode = options.vegasMode ?? false;
+    this.cumulativeVegas = options.cumulativeVegas ?? false;
+    this.dealDifficulty = options.dealDifficulty ?? 'normal';
     this.score = 0;
     this.deal(options);
   }
@@ -662,6 +669,7 @@ class SolitaireUI {
     this.dealDifficultyControl = null;
     this.settingCumulativeRow = document.getElementById('setting-cumulative-row');
     this.settingCumulativePanel = document.getElementById('setting-cumulative-panel');
+    this.settingsModeNotice = document.getElementById('settings-mode-notice');
     this.settingVegasScoreValue = document.getElementById('setting-vegas-score-value');
     this.btnVegasScoreReset = document.getElementById('btn-vegas-score-reset');
     this.settings = loadSettings();
@@ -890,7 +898,7 @@ class SolitaireUI {
     this.sounds.unlock();
     applySavedGame(this.game, saved);
     if (
-      this.settings.cumulativeVegas &&
+      this.game.cumulativeVegas &&
       this.game.vegasMode &&
       saved.vegasCumulativeBase == null
     ) {
@@ -1012,7 +1020,17 @@ class SolitaireUI {
     this.dealDifficultyControl?.setValue(this.settings.dealDifficulty);
     this.updateDealDifficultyLabel(this.dealDifficultyControl?.getIndex() ?? 1);
     this.settingCumulativeRow.classList.toggle('hidden', !this.settings.vegasMode);
+    this.updateSettingsModeNotice();
     this.updateVegasScorePanel();
+  }
+
+  updateSettingsModeNotice() {
+    if (!this.settingsModeNotice) return;
+    const show = hasPendingGameModeChange(this.settings, this.game, {
+      gameStarted: this.gameStarted,
+    });
+    this.settingsModeNotice.textContent = PENDING_GAME_MODE_NOTICE;
+    this.settingsModeNotice.classList.toggle('hidden', !show);
   }
 
   updateDealDifficultyLabel(index) {
@@ -1041,8 +1059,7 @@ class SolitaireUI {
 
     if (
       this.gameStarted &&
-      this.settings.vegasMode &&
-      this.settings.cumulativeVegas &&
+      this.game.cumulativeVegas &&
       this.game.vegasMode
     ) {
       const base = this.game.vegasCumulativeBase ?? 0;
@@ -1058,7 +1075,6 @@ class SolitaireUI {
   }
 
   onSettingsChange() {
-    const prevCumulative = this.settings.cumulativeVegas;
     this.settings = {
       soundEnabled: this.settingSound.checked,
       vegasMode: this.settingVegas.checked,
@@ -1069,19 +1085,11 @@ class SolitaireUI {
     if (!this.settings.vegasMode) {
       this.settings.cumulativeVegas = false;
     }
-    if (
-      prevCumulative &&
-      !this.settings.cumulativeVegas &&
-      this.gameStarted &&
-      this.game.vegasMode
-    ) {
-      saveVegasScore(this.game.score);
-    }
     saveSettings(this.settings);
     this.sounds.enabled = this.settings.soundEnabled;
-    this.game.vegasMode = this.settings.vegasMode;
     this.settingCumulativeRow.classList.toggle('hidden', !this.settings.vegasMode);
     this.settingCumulativeVegas.checked = this.settings.cumulativeVegas;
+    this.updateSettingsModeNotice();
     this.updateVegasScorePanel();
     this.updateScoreDisplay();
     if (this.gameStarted) {
@@ -1101,14 +1109,14 @@ class SolitaireUI {
   }
 
   persistVegasScoreIfNeeded() {
-    if (this.settings.vegasMode && this.settings.cumulativeVegas) {
+    if (this.game.vegasMode && this.game.cumulativeVegas) {
       saveVegasScore(this.game.score);
       this.updateVegasScorePanel();
     }
   }
 
   updateScoreDisplay() {
-    const showVegas = this.gameStarted && (this.settings.vegasMode || this.game.vegasMode);
+    const showVegas = this.gameStarted && this.game.vegasMode;
     if (showVegas) {
       this.statScoreWrap.classList.remove('hidden');
       this.statScore.textContent = formatVegasScore(this.game.score);
@@ -1272,7 +1280,7 @@ class SolitaireUI {
     }
 
     this.game.beginVegasRound(this.getResetOptions());
-    recordGamePlayed(resolveClearMode(this.settings));
+    recordGamePlayed(resolveClearMode(getActiveGameMode(this.game)));
     this.updateScoreDisplay();
     this.persistVegasScoreIfNeeded();
 
@@ -2328,7 +2336,7 @@ class SolitaireUI {
     this.game.pausePlayTime();
     const secs = this.game.elapsedSeconds();
     if (!this.winRecorded) {
-      const mode = resolveClearMode(this.settings);
+      const mode = resolveClearMode(getActiveGameMode(this.game));
       saveClearRecord({
         clearedAt: Date.now(),
         seconds: secs,
@@ -2341,7 +2349,7 @@ class SolitaireUI {
     clearSavedGame();
     this.persistVegasScoreIfNeeded();
     let stats = `${this.game.moves} 手 · ${formatTime(secs)}`;
-    if (this.settings.vegasMode) {
+    if (this.game.vegasMode) {
       stats += ` · ${formatVegasScore(this.game.score)}`;
     }
     this.winStats.textContent = stats;

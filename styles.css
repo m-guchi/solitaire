@@ -835,6 +835,20 @@ body.is-deal-animating {
   text-align: left;
 }
 
+.settings-mode-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f0fff4;
+  color: #276749;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.settings-mode-notice.hidden {
+  display: none;
+}
+
 .overlay-content--records {
   max-width: 360px;
   padding: 24px 20px 20px;

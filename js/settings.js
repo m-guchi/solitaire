@@ -29,15 +29,15 @@ export const SETTING_HELP = {
   },
   vegas: {
     title: 'ベガスモード',
-    body: '山札は1回のみめくれます。組札にカードを置くと+$5、1ゲームの開始時に-$52されます。',
+    body: '山札は1回のみめくれます。組札にカードを置くと+$5、1ゲームの開始時に-$52されます。変更は次のゲームから反映されます。',
   },
   cumulativeVegas: {
     title: '累計ベガスモード',
-    body: 'ベガスモードのスコアをゲームをまたいで累計します。設定画面から累計スコアをリセットできます。ゲームモードを変更しても累計スコアは保持されます。',
+    body: 'ベガスモードのスコアをゲームをまたいで累計します。設定画面から累計スコアをリセットできます。ゲームモードを変更しても累計スコアは保持されます。変更は次のゲームから反映されます。',
   },
   dealDifficulty: {
     title: '配札の難易度',
-    body: '新しいゲーム開始時の配札を選びます。やさしい・通常・難しいはシミュレーションで見積もった1ゲームのベガス点数（開始時-$52、組札へ+$5）に近い配札を選びます。とても難しいは完全なランダム配札です。ベガス・ノーマルどちらのモードにも適用されます。',
+    body: '新しいゲーム開始時の配札を選びます。やさしい・通常・難しいはシミュレーションで見積もった1ゲームのベガス点数（開始時-$52、組札へ+$5）に近い配札を選びます。とても難しいは完全なランダム配札です。ベガス・ノーマルどちらのモードにも適用されます。変更は次のゲームから反映されます。',
   },
   easyMove: {
     title: '簡単移動',
@@ -69,6 +69,26 @@ export function getDealDifficultyLabel(value) {
   );
   return option?.label ?? DEAL_DIFFICULTY_OPTIONS[1].label;
 }
+
+export function getActiveGameMode(game) {
+  return {
+    vegasMode: Boolean(game?.vegasMode),
+    cumulativeVegas: Boolean(game?.cumulativeVegas),
+    dealDifficulty: normalizeDealDifficulty(game?.dealDifficulty),
+  };
+}
+
+export function hasPendingGameModeChange(settings, game, { gameStarted = false } = {}) {
+  if (!gameStarted || !game) return false;
+  const active = getActiveGameMode(game);
+  return (
+    settings.vegasMode !== active.vegasMode
+    || settings.cumulativeVegas !== active.cumulativeVegas
+    || normalizeDealDifficulty(settings.dealDifficulty) !== active.dealDifficulty
+  );
+}
+
+export const PENDING_GAME_MODE_NOTICE = 'ゲームモードの変更は、次のゲームから適用されます。';
 
 export function loadSettings() {
   try {
