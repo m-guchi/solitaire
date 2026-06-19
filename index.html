@@ -23,6 +23,9 @@
       write('<link rel="apple-touch-icon" href="' + assetUrl('assets/apple-touch-icon.png?v=6') + '">');
       write('<link rel="manifest" href="' + assetUrl('manifest.webmanifest') + '">');
       write('<link rel="stylesheet" href="' + assetUrl('styles.css?v=1.3.1') + '">');
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(assetUrl('sw.js'), { scope: basePath }).catch(function () {});
+      }
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">

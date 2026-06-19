@@ -56,6 +56,14 @@ swContent = swContent.replace(
   /const CACHE_VERSION = '[^']*';/,
   `const CACHE_VERSION = '${version}';`,
 );
+swContent = swContent.replace(
+  /'\.\/styles\.css\?v=[^']*'/,
+  `'./styles.css?v=${version}'`,
+);
+swContent = swContent.replace(
+  /'\.\/js\/game\.js\?v=[^']*'/,
+  `'./js/game.js?v=${version}'`,
+);
 fs.writeFileSync(swPath, swContent, 'utf8');
 
 const indexPath = path.join(root, 'index.html');
