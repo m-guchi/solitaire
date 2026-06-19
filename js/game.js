@@ -587,6 +587,7 @@ class SolitaireUI {
     this.rankingSort = 'time';
 
     this.btnRecords = document.getElementById('btn-records');
+    this.btnHome = document.getElementById('btn-home');
     this.btnNew = document.getElementById('btn-new');
     this.btnUndo = document.getElementById('btn-undo');
     this.btnRanking = document.getElementById('btn-ranking');
@@ -686,6 +687,7 @@ class SolitaireUI {
     this.btnInstallClose.addEventListener('click', () => this.closeOverlay(this.installOverlay));
     this.btnChangelogClose.addEventListener('click', () => this.closeOverlay(this.changelogOverlay));
     this.btnRecords.addEventListener('click', () => this.openRecordsOverlay());
+    this.btnHome.addEventListener('click', () => this.returnToStartScreen());
     this.btnNew.addEventListener('click', () => {
       if (!this.gameStarted) return;
       this.openOverlay(this.newGameOverlay);
@@ -815,10 +817,42 @@ class SolitaireUI {
     this.updateBottomNav();
   }
 
+  returnToStartScreen() {
+    if (!this.gameStarted) return;
+    if (this.animatingDeal || this.animatingStock || this.animatingMove || this.autoCompleting) return;
+
+    this.game.pausePlayTime();
+    this.persistGameSave();
+    this.persistVegasScoreIfNeeded();
+    this.clearSelection();
+
+    for (const overlay of [
+      this.winOverlay,
+      this.newGameOverlay,
+      this.rankingOverlay,
+      this.recordsOverlay,
+      this.settingsOverlay,
+      this.settingHelpOverlay,
+      this.changelogOverlay,
+      this.installOverlay,
+    ]) {
+      this.closeOverlay(overlay);
+    }
+
+    this.gameStarted = false;
+    this.startOverlay.classList.remove('hidden');
+    this.renderStartScreen();
+  }
+
   updateBottomNav() {
     const onStart = !this.gameStarted;
     const dealBusy = this.animatingDeal;
+    const busy = dealBusy
+      || this.autoCompleting
+      || this.animatingStock
+      || this.animatingMove;
 
+    this.btnHome.disabled = onStart || busy;
     this.btnNew.disabled = onStart || dealBusy;
     this.btnUndo.disabled = onStart || dealBusy || this.game.history.length === 0;
     this.btnRecords.disabled = onStart;

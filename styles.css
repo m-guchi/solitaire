@@ -86,6 +86,20 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: default;
+  touch-action: manipulation;
+}
+
+.app-title:not(:disabled) {
+  cursor: pointer;
+}
+
+.app-title:not(:disabled):active {
+  opacity: 0.72;
 }
 
 .app-title-icon {
