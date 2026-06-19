@@ -11,6 +11,7 @@ import {
 import { loadSettings, saveSettings, loadVegasScore, saveVegasScore, SETTING_HELP, normalizeDealDifficulty } from './settings.js';
 import { APP_VERSION, CHANGELOG, formatChangelogDate } from './changelog.js';
 import { initAppUpdate } from './app-update.js';
+import { getInstallHelp, shouldShowInstallLink } from './pwa-install.js';
 import { selectDealLayout } from './deal-quality.js';
 import {
   SUITS,
@@ -598,6 +599,7 @@ class SolitaireUI {
     this.btnStartRanking = document.getElementById('btn-start-ranking');
     this.btnStartSettings = document.getElementById('btn-start-settings');
     this.startVersion = document.getElementById('start-version');
+    this.startInstallLink = document.getElementById('start-install-link');
     this.btnAutoComplete = document.getElementById('btn-auto-complete');
     this.autoCompleteBar = document.getElementById('auto-complete-bar');
     this.btnRankingClose = document.getElementById('btn-ranking-close');
@@ -616,6 +618,11 @@ class SolitaireUI {
     this.settingHelpOverlay = document.getElementById('setting-help-overlay');
     this.settingHelpTitle = document.getElementById('setting-help-title');
     this.settingHelpBody = document.getElementById('setting-help-body');
+    this.installOverlay = document.getElementById('install-overlay');
+    this.installTitle = document.getElementById('install-title');
+    this.installSteps = document.getElementById('install-steps');
+    this.installNote = document.getElementById('install-note');
+    this.btnInstallClose = document.getElementById('btn-install-close');
     this.changelogOverlay = document.getElementById('changelog-overlay');
     this.changelogList = document.getElementById('changelog-list');
     this.rankingList = document.getElementById('ranking-list');
@@ -672,6 +679,8 @@ class SolitaireUI {
     this.btnStartRanking.addEventListener('click', () => this.openRankingOverlay());
     this.btnStartSettings.addEventListener('click', () => this.openSettingsOverlay());
     this.startVersion?.addEventListener('click', () => this.openChangelogOverlay());
+    this.startInstallLink?.addEventListener('click', () => this.openInstallOverlay());
+    this.btnInstallClose.addEventListener('click', () => this.closeOverlay(this.installOverlay));
     this.btnChangelogClose.addEventListener('click', () => this.closeOverlay(this.changelogOverlay));
     this.btnRecords.addEventListener('click', () => this.openRecordsOverlay());
     this.btnNew.addEventListener('click', () => {
@@ -747,6 +756,7 @@ class SolitaireUI {
         this.closeOverlay(this.rankingOverlay);
         this.closeOverlay(this.recordsOverlay);
         this.closeOverlay(this.settingHelpOverlay);
+        this.closeOverlay(this.installOverlay);
         this.closeOverlay(this.settingsOverlay);
         this.closeOverlay(this.changelogOverlay);
       }
@@ -855,6 +865,25 @@ class SolitaireUI {
     this.settingHelpTitle.textContent = help.title;
     this.settingHelpBody.textContent = help.body;
     this.openOverlay(this.settingHelpOverlay);
+  }
+
+  openInstallOverlay() {
+    const help = getInstallHelp();
+    this.installTitle.textContent = help.title;
+    this.installSteps.replaceChildren();
+    for (const step of help.steps) {
+      const item = document.createElement('li');
+      item.textContent = step;
+      this.installSteps.appendChild(item);
+    }
+    if (help.note) {
+      this.installNote.textContent = help.note;
+      this.installNote.classList.remove('hidden');
+    } else {
+      this.installNote.textContent = '';
+      this.installNote.classList.add('hidden');
+    }
+    this.openOverlay(this.installOverlay);
   }
 
   openChangelogOverlay() {
@@ -1222,6 +1251,7 @@ class SolitaireUI {
     if (this.startVersion) {
       this.startVersion.textContent = `v${APP_VERSION}`;
     }
+    this.startInstallLink?.classList.toggle('hidden', !shouldShowInstallLink());
     fitLayout();
     this.renderPile('stock', []);
     this.renderPile('waste', []);

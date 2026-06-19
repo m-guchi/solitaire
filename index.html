@@ -151,7 +151,10 @@
             設定
           </button>
         </div>
-        <button type="button" id="start-version" class="start-version" aria-label="更新履歴を表示"></button>
+        <div class="start-footer">
+          <button type="button" id="start-version" class="start-version" aria-label="更新履歴を表示"></button>
+          <button type="button" id="start-install-link" class="start-install-link hidden" aria-label="ホーム画面への追加方法を表示">ホーム画面に追加</button>
+        </div>
       </div>
     </div>
 
@@ -275,6 +278,14 @@
         <h2 id="setting-help-title"></h2>
         <p id="setting-help-body" class="setting-help-body"></p>
         <button type="button" id="btn-setting-help-close" class="btn btn-primary">閉じる</button>
+      </div>
+    </div>
+    <div id="install-overlay" class="overlay hidden" role="dialog" aria-labelledby="install-title">
+      <div class="overlay-content overlay-content--setting-help">
+        <h2 id="install-title">ホーム画面に追加</h2>
+        <ol id="install-steps" class="install-steps"></ol>
+        <p id="install-note" class="install-note hidden"></p>
+        <button type="button" id="btn-install-close" class="btn btn-primary">閉じる</button>
       </div>
     </div>
     <div id="changelog-overlay" class="overlay hidden" role="dialog" aria-labelledby="changelog-title">
