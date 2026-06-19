@@ -10,6 +10,7 @@ import {
 } from './save.js';
 import { loadSettings, saveSettings, loadVegasScore, saveVegasScore, SETTING_HELP, normalizeDealDifficulty } from './settings.js';
 import { APP_VERSION, CHANGELOG, formatChangelogDate } from './changelog.js';
+import { initAppUpdate } from './app-update.js';
 import { selectDealLayout } from './deal-quality.js';
 import {
   SUITS,
@@ -639,6 +640,7 @@ class SolitaireUI {
 
     this.bindEvents();
     this.bindPageLifecycle();
+    initAppUpdate(APP_VERSION);
     this.startTimer();
     fitLayout();
     this.renderStartScreen();

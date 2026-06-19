@@ -36,7 +36,7 @@ jobs:
       - name: Prepare deploy bundle
         run: |
           mkdir -p dist
-          cp index.html styles.css manifest.webmanifest dist/
+          cp index.html styles.css manifest.webmanifest sw.js dist/
           cp -r js assets dist/
           cp deploy/.htaccess dist/.htaccess
           test -f dist/assets/icon-192.png

@@ -49,4 +49,25 @@ if (topVersion !== version) {
 }
 
 fs.writeFileSync(changelogPath, content, 'utf8');
+
+const swPath = path.join(root, 'sw.js');
+let swContent = fs.readFileSync(swPath, 'utf8');
+swContent = swContent.replace(
+  /const CACHE_VERSION = '[^']*';/,
+  `const CACHE_VERSION = '${version}';`,
+);
+fs.writeFileSync(swPath, swContent, 'utf8');
+
+const indexPath = path.join(root, 'index.html');
+let indexContent = fs.readFileSync(indexPath, 'utf8');
+indexContent = indexContent.replace(
+  /assetUrl\('js\/game\.js\?v=[^']+'\)/,
+  `assetUrl('js/game.js?v=${version}')`,
+);
+indexContent = indexContent.replace(
+  /assetUrl\('styles\.css\?v=[^']+'\)/,
+  `assetUrl('styles.css?v=${version}')`,
+);
+fs.writeFileSync(indexPath, indexContent, 'utf8');
+
 console.log(`Synced version ${version} to js/changelog.js`);

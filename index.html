@@ -11,6 +11,7 @@
         return /\.[a-z0-9]+$/i.test(last) ? path.replace(/\/[^/]*$/, '/') : path + '/';
       }
       var basePath = getBasePath();
+      window.getBasePath = getBasePath;
       window.assetUrl = function (rel) {
         return location.origin + basePath + String(rel).replace(/^\.\//, '');
       };
@@ -21,7 +22,7 @@
       write('<link rel="icon" href="' + assetUrl('assets/favicon-32.png?v=6') + '" type="image/png" sizes="32x32">');
       write('<link rel="apple-touch-icon" href="' + assetUrl('assets/apple-touch-icon.png?v=6') + '">');
       write('<link rel="manifest" href="' + assetUrl('manifest.webmanifest') + '">');
-      write('<link rel="stylesheet" href="' + assetUrl('styles.css?v=67') + '">');
+      write('<link rel="stylesheet" href="' + assetUrl('styles.css?v=1.2.0') + '">');
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -285,13 +286,17 @@
         <button type="button" id="btn-changelog-close" class="btn btn-primary">閉じる</button>
       </div>
     </div>
+    <div id="app-update-bar" class="app-update-bar hidden" role="status" aria-live="polite">
+      <p class="app-update-message">新しいバージョンがあります</p>
+      <button type="button" id="btn-app-update" class="btn-app-update">更新する</button>
+    </div>
   </div>
 
   <script>
     (function () {
       var script = document.createElement('script');
       script.type = 'module';
-      script.src = assetUrl('js/game.js?v=59');
+      script.src = assetUrl('js/game.js?v=1.2.0');
       document.body.appendChild(script);
     })();
   </script>
