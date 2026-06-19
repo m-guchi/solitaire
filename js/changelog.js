@@ -1,5 +1,5 @@
 /** package.json の version が正。npm version / npm run release:* で自動同期される */
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.3.0';
 
 /**
  * アプリ内「更新履歴」に表示するデータ。
@@ -12,7 +12,7 @@ export const APP_VERSION = '1.2.0';
  */
 export const CHANGELOG = [
   {
-    version: '1.2.0',
+    version: '1.3.0',
     date: '2026-06-19',
     changes: [
       '設定に配札の難易度（やさしい・通常・難しい・とても難しい）を追加。ベガス・ノーマルどちらのモードにも適用されます',
