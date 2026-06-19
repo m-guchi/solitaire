@@ -611,6 +611,9 @@ class SolitaireUI {
     this.statMoves = document.getElementById('stat-moves');
     this.statTime = document.getElementById('stat-time');
     this.winOverlay = document.getElementById('win-overlay');
+    this.newGameOverlay = document.getElementById('new-game-overlay');
+    this.btnNewGameConfirm = document.getElementById('btn-new-game-confirm');
+    this.btnNewGameCancel = document.getElementById('btn-new-game-cancel');
     this.startOverlay = document.getElementById('start-overlay');
     this.rankingOverlay = document.getElementById('ranking-overlay');
     this.recordsOverlay = document.getElementById('records-overlay');
@@ -685,8 +688,13 @@ class SolitaireUI {
     this.btnRecords.addEventListener('click', () => this.openRecordsOverlay());
     this.btnNew.addEventListener('click', () => {
       if (!this.gameStarted) return;
+      this.openOverlay(this.newGameOverlay);
+    });
+    this.btnNewGameConfirm.addEventListener('click', () => {
+      this.closeOverlay(this.newGameOverlay);
       this.newGame();
     });
+    this.btnNewGameCancel.addEventListener('click', () => this.closeOverlay(this.newGameOverlay));
     this.btnUndo.addEventListener('click', () => {
       if (!this.gameStarted) return;
       this.undo();
@@ -759,6 +767,7 @@ class SolitaireUI {
         this.closeOverlay(this.installOverlay);
         this.closeOverlay(this.settingsOverlay);
         this.closeOverlay(this.changelogOverlay);
+        this.closeOverlay(this.newGameOverlay);
       }
     });
   }

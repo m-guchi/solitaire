@@ -622,6 +622,46 @@ body.is-deal-animating {
   min-height: 48px;
 }
 
+.overlay-content .btn-play-again {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  padding: 14px 20px;
+  background: linear-gradient(180deg, var(--felt-light) 0%, var(--felt) 100%);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 16px rgba(26, 71, 42, 0.4);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.overlay-content .btn-play-again:active:not(:disabled) {
+  background: var(--felt);
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(26, 71, 42, 0.35);
+}
+
+.overlay-content--confirm {
+  padding: 28px 24px 24px;
+}
+
+.overlay-confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.overlay-confirm-actions .btn-play-again,
+.overlay-confirm-actions .btn-overlay-close {
+  margin-bottom: 0;
+}
+
 .btn-overlay-close {
   width: 100%;
   min-height: 48px;
@@ -1473,12 +1513,14 @@ body.on-start-screen .bottom-nav-btn {
   background: rgba(0, 0, 0, 0.72);
 }
 
+#win-overlay,
 #ranking-overlay,
 #records-overlay,
 #settings-overlay,
 #changelog-overlay,
 #setting-help-overlay,
-#install-overlay {
+#install-overlay,
+#new-game-overlay {
   z-index: 2600;
 }
 

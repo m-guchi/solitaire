@@ -165,7 +165,18 @@
       <div class="overlay-content">
         <h2 id="win-title">おめでとう！</h2>
         <p id="win-stats"></p>
-        <button type="button" id="btn-play-again" class="btn btn-play-again">もう一度</button>
+        <button type="button" id="btn-play-again" class="btn-play-again">もう一度</button>
+      </div>
+    </div>
+
+    <div id="new-game-overlay" class="overlay hidden" role="dialog" aria-labelledby="new-game-title" aria-describedby="new-game-message">
+      <div class="overlay-content overlay-content--confirm">
+        <h2 id="new-game-title">新しいゲーム</h2>
+        <p id="new-game-message" class="overlay-message">進行中のゲームは失われます。新しいゲームを始めますか？</p>
+        <div class="overlay-confirm-actions">
+          <button type="button" id="btn-new-game-confirm" class="btn-play-again">新しいゲームを始める</button>
+          <button type="button" id="btn-new-game-cancel" class="btn-overlay-close">キャンセル</button>
+        </div>
       </div>
     </div>
 
