@@ -21,14 +21,13 @@ function resolveAssetUrl(relativePath) {
 }
 
 export function initAppUpdate(currentVersion) {
-  sessionStorage.removeItem('solitaire-app-reloading');
-
   const bar = document.getElementById('app-update-bar');
   const button = document.getElementById('btn-app-update');
   if (!bar || !button) return;
 
   let pendingVersion = null;
   let registration = null;
+  let userRequestedUpdate = false;
 
   const showBar = (nextVersion = null) => {
     pendingVersion = nextVersion;
@@ -41,12 +40,8 @@ export function initAppUpdate(currentVersion) {
     bar.classList.remove('hidden');
   };
 
-  const hideBar = () => {
-    bar.classList.add('hidden');
-    pendingVersion = null;
-  };
-
   const applyUpdate = async () => {
+    userRequestedUpdate = true;
     if (registration?.waiting) {
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       return;
@@ -102,8 +97,7 @@ export function initAppUpdate(currentVersion) {
       });
 
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (sessionStorage.getItem('solitaire-app-reloading')) return;
-        sessionStorage.setItem('solitaire-app-reloading', '1');
+        if (!userRequestedUpdate) return;
         location.reload();
       });
 
