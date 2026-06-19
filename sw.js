@@ -1,12 +1,12 @@
-const CACHE_VERSION = '1.4.0';
+const CACHE_VERSION = '1.4.1';
 const CACHE_NAME = `solitaire-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
   './',
   './index.html',
-  './styles.css?v=1.4.0',
+  './styles.css?v=1.4.1',
   './manifest.webmanifest',
-  './js/game.js?v=1.4.0',
+  './js/game.js?v=1.4.1',
   './js/app-update.js',
   './js/changelog.js',
   './js/deal-quality.js',
@@ -32,6 +32,50 @@ function isCacheableAsset(request) {
   const { pathname } = new URL(request.url);
   return /\.(html|css|js|png|ico|svg|webmanifest)$/.test(pathname)
     || pathname.endsWith('/');
+}
+
+function isUnversionedModuleScript(request) {
+  const { pathname, search } = new URL(request.url);
+  return pathname.endsWith('.js') && !/[?&]v=/.test(search);
+}
+
+async function openCache() {
+  return caches.open(CACHE_NAME);
+}
+
+async function networkFirst(request, { fallbackUrls = [] } = {}) {
+  const cache = await openCache();
+  try {
+    const response = await fetch(request);
+    if (response.ok && isCacheableAsset(request)) {
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    for (const url of fallbackUrls) {
+      const fallback = await cache.match(url);
+      if (fallback) return fallback;
+    }
+    return Response.error();
+  }
+}
+
+async function cacheFirst(request) {
+  const cache = await openCache();
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok && isCacheableAsset(request)) {
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return Response.error();
+  }
 }
 
 self.addEventListener('install', (event) => {
@@ -68,24 +112,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const cached = await cache.match(request, { ignoreSearch: true });
-    if (cached) return cached;
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request, { fallbackUrls: ['./index.html', './'] }));
+    return;
+  }
 
-    try {
-      const response = await fetch(request);
-      if (response.ok && isCacheableAsset(request)) {
-        await cache.put(request, response.clone());
-      }
-      return response;
-    } catch {
-      if (request.mode === 'navigate') {
-        return (await cache.match('./index.html'))
-          ?? (await cache.match('./'))
-          ?? Response.error();
-      }
-      return Response.error();
-    }
-  })());
+  if (isUnversionedModuleScript(request)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  event.respondWith(cacheFirst(request));
 });

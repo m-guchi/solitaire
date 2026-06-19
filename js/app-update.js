@@ -20,24 +20,30 @@ function resolveAssetUrl(relativePath) {
   return `${location.origin}${basePath}${String(relativePath).replace(/^\.\//, '')}`;
 }
 
-export function initAppUpdate(currentVersion) {
+export function initAppUpdate(currentVersion, { shouldShowBar = () => true } = {}) {
   const bar = document.getElementById('app-update-bar');
   const button = document.getElementById('btn-app-update');
-  if (!bar || !button) return;
+  if (!bar || !button) return null;
 
   let pendingVersion = null;
   let registration = null;
   let userRequestedUpdate = false;
+  let updateAvailable = false;
+
+  const syncBarVisibility = () => {
+    bar.classList.toggle('hidden', !updateAvailable || !shouldShowBar());
+  };
 
   const showBar = (nextVersion = null) => {
-    pendingVersion = nextVersion;
+    if (nextVersion) pendingVersion = nextVersion;
+    updateAvailable = true;
     const message = bar.querySelector('.app-update-message');
     if (message) {
-      message.textContent = nextVersion
-        ? `新しいバージョン（v${nextVersion}）があります`
+      message.textContent = pendingVersion
+        ? `新しいバージョン（v${pendingVersion}）があります`
         : '新しいバージョンがあります';
     }
-    bar.classList.remove('hidden');
+    syncBarVisibility();
   };
 
   const applyUpdate = async () => {
@@ -98,7 +104,9 @@ export function initAppUpdate(currentVersion) {
 
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!userRequestedUpdate) return;
-        location.reload();
+        const url = new URL(location.href);
+        url.searchParams.set('appUpdated', Date.now().toString());
+        location.replace(url.toString());
       });
 
       const refreshRegistration = () => {
@@ -120,4 +128,6 @@ export function initAppUpdate(currentVersion) {
 
   void initServiceWorker();
   void checkRemoteVersion();
+
+  return { syncBarVisibility };
 }

@@ -129,20 +129,17 @@ body {
 }
 
 .app-update-bar {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
+  margin-top: 16px;
   padding: 12px 14px;
   background: #1a202c;
   color: #f7fafc;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
 }
 
 .app-update-bar.hidden {

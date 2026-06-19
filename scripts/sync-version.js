@@ -34,6 +34,7 @@ if (!topVersionMatch) {
 const topVersion = topVersionMatch[1];
 if (topVersion !== version) {
   const today = new Date().toISOString().slice(0, 10);
+  // 先頭に新エントリのみ追記する。過去バージョンのエントリは変更しない（js/changelog.js の記載ルール参照）。
   const newEntry = `  {
     version: '${version}',
     date: '${today}',
