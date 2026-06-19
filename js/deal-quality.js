@@ -1,8 +1,21 @@
 import { createDeck, shuffle, canPlaceOnTableau, canPlaceOnFoundation } from './rules.js';
 
-export const MIN_FOUNDATION_MOVES = 5;
-export const CUMULATIVE_TRIAL_COUNT = 3;
-const MAX_SEARCH_ATTEMPTS = 500;
+export const VEGAS_ENTRY_FEE = 52;
+export const VEGAS_FOUNDATION_REWARD = 5;
+
+export const DEAL_DIFFICULTY_SCORE_TARGETS = {
+  easy: 10,
+  normal: 0,
+  hard: -25,
+  veryHard: null,
+};
+
+const MAX_SEARCH_ATTEMPTS = 200;
+/** 候補をランダム選択したときの見積もり点数の目標標準偏差 */
+export const TARGET_SCORE_STDEV = 8;
+/** 一様分布で標準偏差 s になる半幅: s * sqrt(3) */
+export const SCORE_BAND_HALF_WIDTH = TARGET_SCORE_STDEV * Math.sqrt(3);
+const MIN_BAND_CANDIDATES = 2;
 
 function cloneCard(card) {
   return { ...card };
@@ -268,43 +281,51 @@ function evaluateShuffledDeal(vegasMode) {
   return { layout, moves };
 }
 
-export function selectDealLayout({ vegasMode = false, cumulativeVegas = false, storedVegasScore = 0 } = {}) {
-  const cumulativeNegative = cumulativeVegas && storedVegasScore < 0;
+export function estimateVegasScoreFromFoundationMoves(moves) {
+  return VEGAS_FOUNDATION_REWARD * moves - VEGAS_ENTRY_FEE;
+}
 
-  if (cumulativeNegative) {
-    const candidates = [];
-    let attempts = 0;
-    let bestFallback = null;
+export function foundationMovesFromVegasScore(score) {
+  return (score + VEGAS_ENTRY_FEE) / VEGAS_FOUNDATION_REWARD;
+}
 
-    while (attempts < MAX_SEARCH_ATTEMPTS && candidates.length < CUMULATIVE_TRIAL_COUNT) {
-      attempts++;
-      const candidate = evaluateShuffledDeal(vegasMode);
-      if (!bestFallback || candidate.moves > bestFallback.moves) {
-        bestFallback = candidate;
-      }
-      if (candidate.moves >= MIN_FOUNDATION_MOVES) {
-        candidates.push(candidate);
-      }
-    }
+export function getDealDifficultyScoreTarget(dealDifficulty) {
+  if (dealDifficulty === 'veryHard') return null;
+  return DEAL_DIFFICULTY_SCORE_TARGETS[dealDifficulty] ?? DEAL_DIFFICULTY_SCORE_TARGETS.normal;
+}
 
-    if (candidates.length > 0) {
-      candidates.sort((a, b) => b.moves - a.moves);
-      return candidates[0].layout;
-    }
-
-    return bestFallback?.layout ?? evaluateShuffledDeal(vegasMode).layout;
+export function selectDealLayout({ vegasMode = false, dealDifficulty = 'normal' } = {}) {
+  if (dealDifficulty === 'veryHard') {
+    return evaluateShuffledDeal(vegasMode).layout;
   }
 
-  let bestFallback = null;
+  const scoreTarget = getDealDifficultyScoreTarget(dealDifficulty);
+  const bandCandidates = [];
+  let best = null;
+  let bestScoreDistance = Infinity;
+
   for (let attempts = 0; attempts < MAX_SEARCH_ATTEMPTS; attempts++) {
     const candidate = evaluateShuffledDeal(vegasMode);
-    if (!bestFallback || candidate.moves > bestFallback.moves) {
-      bestFallback = candidate;
+    const estimatedScore = estimateVegasScoreFromFoundationMoves(candidate.moves);
+    const scoreDistance = Math.abs(estimatedScore - scoreTarget);
+
+    if (scoreDistance < bestScoreDistance) {
+      bestScoreDistance = scoreDistance;
+      best = candidate;
     }
-    if (candidate.moves >= MIN_FOUNDATION_MOVES) {
-      return candidate.layout;
+
+    if (scoreDistance <= SCORE_BAND_HALF_WIDTH) {
+      bandCandidates.push(candidate);
     }
   }
 
-  return bestFallback?.layout ?? evaluateShuffledDeal(vegasMode).layout;
+  if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+    return bandCandidates[Math.floor(Math.random() * bandCandidates.length)].layout;
+  }
+
+  if (bandCandidates.length > 0) {
+    return bandCandidates[0].layout;
+  }
+
+  return best.layout;
 }

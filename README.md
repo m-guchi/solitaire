@@ -21,6 +21,7 @@ npm run dev
 | アイテム | フィールド名 | 説明 |
 | :--- | :--- | :--- |
 | `solitaire` | `DEPLOY_PATH` | 静的ファイルの配置先（例: `/var/www/html/solitaire`） |
+| `discord_webhook` | `CI_URL` | CI / デプロイ通知用 Discord Webhook URL（全アプリ共通） |
 | `githubaction-sshkey` | `PRIVATE_KEY` | SSH 秘密鍵（デプロイ用・他アプリと共通） |
 | `Server` | `host` | デプロイ先サーバーのホスト名または IP |
 | `Server` | `username` | SSH 接続ユーザー名 |
@@ -37,6 +38,8 @@ GitHub リポジトリには **1つだけ** シークレットを登録します
 | `OP_SERVICE_ACCOUNT_TOKEN` | 1Password Service Account のトークン（`apps` ボールトへの読み取り権限） |
 
 `main` ブランチへのプッシュで、ビルド → SSH デプロイが自動実行されます。デプロイに必要な SSH 情報はすべて 1Password から取得されます。
+
+**Discord 通知（CI / デプロイ）:** デプロイ結果は Discord に通知されます。設定手順・フォーマットの詳細は [apps/.github/README.md](../.github/README.md)（Discord 通知設定）を参照してください。
 
 ### 3. サーバー側の準備
 

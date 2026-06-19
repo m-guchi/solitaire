@@ -8,8 +8,9 @@ import {
   applySavedGame,
   getSavedGameSummary,
 } from './save.js';
-import { loadSettings, saveSettings, loadVegasScore, saveVegasScore, SETTING_HELP } from './settings.js';
+import { loadSettings, saveSettings, loadVegasScore, saveVegasScore, SETTING_HELP, normalizeDealDifficulty } from './settings.js';
 import { APP_VERSION, CHANGELOG, formatChangelogDate } from './changelog.js';
+import { initAppUpdate } from './app-update.js';
 import { selectDealLayout } from './deal-quality.js';
 import {
   SUITS,
@@ -63,8 +64,7 @@ class SolitaireGame {
   deal(options = {}) {
     const layout = selectDealLayout({
       vegasMode: options.vegasMode ?? this.vegasMode,
-      cumulativeVegas: options.cumulativeVegas ?? false,
-      storedVegasScore: options.storedVegasScore ?? 0,
+      dealDifficulty: options.dealDifficulty ?? 'normal',
     });
     this.applyDealLayout(layout);
   }
@@ -629,6 +629,7 @@ class SolitaireUI {
     this.settingVegas = document.getElementById('setting-vegas');
     this.settingCumulativeVegas = document.getElementById('setting-cumulative-vegas');
     this.settingEasyMove = document.getElementById('setting-easy-move');
+    this.settingDealDifficulty = document.getElementById('setting-deal-difficulty');
     this.settingCumulativeRow = document.getElementById('setting-cumulative-row');
     this.settingCumulativePanel = document.getElementById('setting-cumulative-panel');
     this.settingVegasScoreValue = document.getElementById('setting-vegas-score-value');
@@ -639,6 +640,7 @@ class SolitaireUI {
 
     this.bindEvents();
     this.bindPageLifecycle();
+    initAppUpdate(APP_VERSION);
     this.startTimer();
     fitLayout();
     this.renderStartScreen();
@@ -709,6 +711,7 @@ class SolitaireUI {
       this.settingVegas,
       this.settingCumulativeVegas,
       this.settingEasyMove,
+      this.settingDealDifficulty,
     ]) {
       input.addEventListener('change', () => this.onSettingsChange());
     }
@@ -905,6 +908,7 @@ class SolitaireUI {
     this.settingVegas.checked = this.settings.vegasMode;
     this.settingCumulativeVegas.checked = this.settings.cumulativeVegas;
     this.settingEasyMove.checked = this.settings.easyMove;
+    this.settingDealDifficulty.value = this.settings.dealDifficulty;
     this.settingCumulativeRow.classList.toggle('hidden', !this.settings.vegasMode);
     this.updateVegasScorePanel();
   }
@@ -950,6 +954,7 @@ class SolitaireUI {
       soundEnabled: this.settingSound.checked,
       vegasMode: this.settingVegas.checked,
       cumulativeVegas: this.settingVegas.checked && this.settingCumulativeVegas.checked,
+      dealDifficulty: normalizeDealDifficulty(this.settingDealDifficulty.value),
       easyMove: this.settingEasyMove.checked,
     };
     if (!this.settings.vegasMode) {
@@ -982,6 +987,7 @@ class SolitaireUI {
       vegasMode: this.settings.vegasMode,
       cumulativeVegas: this.settings.cumulativeVegas,
       storedVegasScore: loadVegasScore(),
+      dealDifficulty: this.settings.dealDifficulty,
     };
   }
 
