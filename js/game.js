@@ -8,7 +8,16 @@ import {
   applySavedGame,
   getSavedGameSummary,
 } from './save.js';
-import { loadSettings, saveSettings, loadVegasScore, saveVegasScore, SETTING_HELP, normalizeDealDifficulty } from './settings.js';
+import {
+  createDealDifficultyControl,
+  loadSettings,
+  saveSettings,
+  loadVegasScore,
+  saveVegasScore,
+  SETTING_HELP,
+  getDealDifficultyValue,
+  getDealDifficultyLabel,
+} from './settings.js';
 import { APP_VERSION, CHANGELOG, formatChangelogDate } from './changelog.js';
 import { initAppUpdate } from './app-update.js';
 import { getInstallHelp, shouldShowInstallLink } from './pwa-install.js';
@@ -570,6 +579,14 @@ function buildDealSteps(tableau) {
   return steps;
 }
 
+function bindClick(element, listener) {
+  element?.addEventListener('click', listener);
+}
+
+function bindChange(element, listener) {
+  element?.addEventListener('change', listener);
+}
+
 class SolitaireUI {
   constructor() {
     this.game = new SolitaireGame();
@@ -641,6 +658,8 @@ class SolitaireUI {
     this.settingCumulativeVegas = document.getElementById('setting-cumulative-vegas');
     this.settingEasyMove = document.getElementById('setting-easy-move');
     this.settingDealDifficulty = document.getElementById('setting-deal-difficulty');
+    this.settingDealDifficultyLabel = document.getElementById('setting-deal-difficulty-label');
+    this.dealDifficultyControl = null;
     this.settingCumulativeRow = document.getElementById('setting-cumulative-row');
     this.settingCumulativePanel = document.getElementById('setting-cumulative-panel');
     this.settingVegasScoreValue = document.getElementById('setting-vegas-score-value');
@@ -677,37 +696,37 @@ class SolitaireUI {
   }
 
   bindEvents() {
-    this.btnResume.addEventListener('click', () => this.resumeGame());
-    this.btnStartNew.addEventListener('click', () => this.startNewGame());
-    this.btnStartRecords.addEventListener('click', () => this.openRecordsOverlay());
-    this.btnStartRanking.addEventListener('click', () => this.openRankingOverlay());
-    this.btnStartSettings.addEventListener('click', () => this.openSettingsOverlay());
-    this.startVersion?.addEventListener('click', () => this.openChangelogOverlay());
-    this.startInstallLink?.addEventListener('click', () => this.openInstallOverlay());
-    this.btnInstallClose.addEventListener('click', () => this.closeOverlay(this.installOverlay));
-    this.btnChangelogClose.addEventListener('click', () => this.closeOverlay(this.changelogOverlay));
-    this.btnRecords.addEventListener('click', () => this.openRecordsOverlay());
-    this.btnHome.addEventListener('click', () => this.returnToStartScreen());
-    this.btnNew.addEventListener('click', () => {
+    bindClick(this.btnResume, () => this.resumeGame());
+    bindClick(this.btnStartNew, () => this.startNewGame());
+    bindClick(this.btnStartRecords, () => this.openRecordsOverlay());
+    bindClick(this.btnStartRanking, () => this.openRankingOverlay());
+    bindClick(this.btnStartSettings, () => this.openSettingsOverlay());
+    bindClick(this.startVersion, () => this.openChangelogOverlay());
+    bindClick(this.startInstallLink, () => this.openInstallOverlay());
+    bindClick(this.btnInstallClose, () => this.closeOverlay(this.installOverlay));
+    bindClick(this.btnChangelogClose, () => this.closeOverlay(this.changelogOverlay));
+    bindClick(this.btnRecords, () => this.openRecordsOverlay());
+    bindClick(this.btnHome, () => this.returnToStartScreen());
+    bindClick(this.btnNew, () => {
       if (!this.gameStarted) return;
       this.openOverlay(this.newGameOverlay);
     });
-    this.btnNewGameConfirm.addEventListener('click', () => {
+    bindClick(this.btnNewGameConfirm, () => {
       this.closeOverlay(this.newGameOverlay);
       this.newGame();
     });
-    this.btnNewGameCancel.addEventListener('click', () => this.closeOverlay(this.newGameOverlay));
-    this.btnUndo.addEventListener('click', () => {
+    bindClick(this.btnNewGameCancel, () => this.closeOverlay(this.newGameOverlay));
+    bindClick(this.btnUndo, () => {
       if (!this.gameStarted) return;
       this.undo();
     });
-    this.btnAutoComplete.addEventListener('click', () => {
+    bindClick(this.btnAutoComplete, () => {
       void this.runAutoComplete();
     });
-    this.btnRanking.addEventListener('click', () => this.openRankingOverlay());
-    this.btnRecordsClose.addEventListener('click', () => this.closeOverlay(this.recordsOverlay));
-    this.btnRecordsReset.addEventListener('click', () => this.resetRecords());
-    this.recordsByMode.addEventListener('click', (e) => {
+    bindClick(this.btnRanking, () => this.openRankingOverlay());
+    bindClick(this.btnRecordsClose, () => this.closeOverlay(this.recordsOverlay));
+    bindClick(this.btnRecordsReset, () => this.resetRecords());
+    this.recordsByMode?.addEventListener('click', (e) => {
       const header = e.target.closest('.records-mode-header');
       if (!header) return;
       const expanded = header.getAttribute('aria-expanded') === 'true';
@@ -717,12 +736,12 @@ class SolitaireUI {
         ?.querySelector('.records-mode-detail-panel')
         ?.classList.toggle('hidden', expanded);
     });
-    this.btnSettings.addEventListener('click', () => this.openSettingsOverlay());
-    this.btnRankingClose.addEventListener('click', () => this.closeOverlay(this.rankingOverlay));
-    this.btnSettingsClose.addEventListener('click', () => this.closeOverlay(this.settingsOverlay));
-    this.btnSettingHelpClose.addEventListener('click', () => this.closeOverlay(this.settingHelpOverlay));
-    this.btnVegasScoreReset.addEventListener('click', () => this.resetVegasCumulativeScore());
-    this.settingsOverlay.querySelectorAll('[data-setting-help]').forEach((btn) => {
+    bindClick(this.btnSettings, () => this.openSettingsOverlay());
+    bindClick(this.btnRankingClose, () => this.closeOverlay(this.rankingOverlay));
+    bindClick(this.btnSettingsClose, () => this.closeOverlay(this.settingsOverlay));
+    bindClick(this.btnSettingHelpClose, () => this.closeOverlay(this.settingHelpOverlay));
+    bindClick(this.btnVegasScoreReset, () => this.resetVegasCumulativeScore());
+    this.settingsOverlay?.querySelectorAll('[data-setting-help]').forEach((btn) => {
       btn.addEventListener('click', () => this.openSettingHelp(btn.dataset.settingHelp));
     });
     for (const input of [
@@ -730,9 +749,8 @@ class SolitaireUI {
       this.settingVegas,
       this.settingCumulativeVegas,
       this.settingEasyMove,
-      this.settingDealDifficulty,
     ]) {
-      input.addEventListener('change', () => this.onSettingsChange());
+      bindChange(input, () => this.onSettingsChange());
     }
     this.rankingTabs.forEach((tab) => {
       tab.addEventListener('click', () => {
@@ -747,18 +765,18 @@ class SolitaireUI {
         this.renderRanking();
       });
     });
-    this.btnPlayAgain.addEventListener('click', () => {
+    bindClick(this.btnPlayAgain, () => {
       this.sounds.unlock();
       this.newGame();
     });
 
     this.board = document.querySelector('.board');
-    this.board.addEventListener('click', (e) => this.onClick(e));
-    this.board.addEventListener('dblclick', (e) => this.onDoubleClick(e));
-    this.board.addEventListener('pointerdown', (e) => this.onPointerDown(e));
-    this.board.addEventListener('pointermove', (e) => this.onPointerMove(e));
-    this.board.addEventListener('pointerup', (e) => this.onPointerUp(e));
-    this.board.addEventListener('pointercancel', (e) => this.onPointerCancel(e));
+    this.board?.addEventListener('click', (e) => this.onClick(e));
+    this.board?.addEventListener('dblclick', (e) => this.onDoubleClick(e));
+    this.board?.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+    this.board?.addEventListener('pointermove', (e) => this.onPointerMove(e));
+    this.board?.addEventListener('pointerup', (e) => this.onPointerUp(e));
+    this.board?.addEventListener('pointercancel', (e) => this.onPointerCancel(e));
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -898,7 +916,17 @@ class SolitaireUI {
     void this.animateNewGame({ reshuffle: false });
   }
 
+  ensureDealDifficultyControl() {
+    if (this.dealDifficultyControl) return this.dealDifficultyControl;
+    this.dealDifficultyControl = createDealDifficultyControl(this.settingDealDifficulty, {
+      onInput: (index) => this.updateDealDifficultyLabel(index),
+      onChange: () => this.onSettingsChange(),
+    });
+    return this.dealDifficultyControl;
+  }
+
   openSettingsOverlay() {
+    this.ensureDealDifficultyControl();
     this.syncSettingsForm();
     this.openOverlay(this.settingsOverlay);
   }
@@ -981,9 +1009,17 @@ class SolitaireUI {
     this.settingVegas.checked = this.settings.vegasMode;
     this.settingCumulativeVegas.checked = this.settings.cumulativeVegas;
     this.settingEasyMove.checked = this.settings.easyMove;
-    this.settingDealDifficulty.value = this.settings.dealDifficulty;
+    this.dealDifficultyControl?.setValue(this.settings.dealDifficulty);
+    this.updateDealDifficultyLabel(this.dealDifficultyControl?.getIndex() ?? 1);
     this.settingCumulativeRow.classList.toggle('hidden', !this.settings.vegasMode);
     this.updateVegasScorePanel();
+  }
+
+  updateDealDifficultyLabel(index) {
+    if (!this.settingDealDifficultyLabel) return;
+    const label = getDealDifficultyLabel(getDealDifficultyValue(index));
+    this.settingDealDifficultyLabel.textContent = label;
+    this.settingDealDifficulty?.setAttribute('aria-valuetext', label);
   }
 
   updateVegasScorePanel() {
@@ -1027,7 +1063,7 @@ class SolitaireUI {
       soundEnabled: this.settingSound.checked,
       vegasMode: this.settingVegas.checked,
       cumulativeVegas: this.settingVegas.checked && this.settingCumulativeVegas.checked,
-      dealDifficulty: normalizeDealDifficulty(this.settingDealDifficulty.value),
+      dealDifficulty: this.dealDifficultyControl?.getValue() ?? this.settings.dealDifficulty,
       easyMove: this.settingEasyMove.checked,
     };
     if (!this.settings.vegasMode) {
@@ -1213,11 +1249,11 @@ class SolitaireUI {
   }
 
   openOverlay(overlay) {
-    overlay.classList.remove('hidden');
+    overlay?.classList.remove('hidden');
   }
 
   closeOverlay(overlay) {
-    overlay.classList.add('hidden');
+    overlay?.classList.add('hidden');
   }
 
   newGame() {

@@ -51,6 +51,25 @@ export function normalizeDealDifficulty(value) {
   return DEFAULT_SETTINGS.dealDifficulty;
 }
 
+export function getDealDifficultyIndex(value) {
+  const index = DEAL_DIFFICULTY_OPTIONS.findIndex(
+    (option) => option.value === normalizeDealDifficulty(value),
+  );
+  return index >= 0 ? index : 1;
+}
+
+export function getDealDifficultyValue(index) {
+  const option = DEAL_DIFFICULTY_OPTIONS[Number(index)];
+  return option?.value ?? DEFAULT_SETTINGS.dealDifficulty;
+}
+
+export function getDealDifficultyLabel(value) {
+  const option = DEAL_DIFFICULTY_OPTIONS.find(
+    (item) => item.value === normalizeDealDifficulty(value),
+  );
+  return option?.label ?? DEAL_DIFFICULTY_OPTIONS[1].label;
+}
+
 export function loadSettings() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -80,4 +99,115 @@ export function loadVegasScore() {
 
 export function saveVegasScore(score) {
   localStorage.setItem(VEGAS_SCORE_KEY, String(score));
+}
+
+export function getDealDifficultyThumbPercent(index, maxIndex = DEAL_DIFFICULTY_OPTIONS.length - 1) {
+  if (maxIndex <= 0) return 50;
+  const clamped = Math.max(0, Math.min(maxIndex, Number(index)));
+  return ((clamped + 0.5) / (maxIndex + 1)) * 100;
+}
+
+export function getDealDifficultyIndexFromRatio(ratio, maxIndex = DEAL_DIFFICULTY_OPTIONS.length - 1) {
+  if (maxIndex <= 0) return 0;
+  const clampedRatio = Math.max(0, Math.min(1, ratio));
+  return Math.max(0, Math.min(maxIndex, Math.floor(clampedRatio * (maxIndex + 1))));
+}
+
+export function createDealDifficultyControl(root, { onInput, onChange } = {}) {
+  if (!root) return null;
+
+  const track = root.querySelector('.setting-difficulty-track');
+  const thumb = root.querySelector('.setting-difficulty-thumb');
+  const fill = root.querySelector('.setting-difficulty-fill');
+  const ticks = [...root.querySelectorAll('.setting-difficulty-tick')];
+  if (!track || !thumb || !fill) return null;
+
+  const maxIndex = DEAL_DIFFICULTY_OPTIONS.length - 1;
+  let index = 1;
+  let dragging = false;
+
+  const updateVisual = (nextIndex) => {
+    const pct = getDealDifficultyThumbPercent(nextIndex, maxIndex);
+    thumb.style.left = `${pct}%`;
+    fill.style.width = `${pct}%`;
+    root.setAttribute('aria-valuenow', String(nextIndex));
+    root.setAttribute(
+      'aria-valuetext',
+      getDealDifficultyLabel(getDealDifficultyValue(nextIndex)),
+    );
+    ticks.forEach((tick, tickIndex) => {
+      tick.classList.toggle('is-active', tickIndex === nextIndex);
+    });
+  };
+
+  const setIndex = (nextIndex, { save = false } = {}) => {
+    const clamped = Math.max(0, Math.min(maxIndex, Number(nextIndex)));
+    const changed = clamped !== index;
+    index = clamped;
+    updateVisual(index);
+    onInput?.(index);
+    if (save && changed) onChange?.(index);
+    return index;
+  };
+
+  const indexFromClientX = (clientX) => {
+    const rect = track.getBoundingClientRect();
+    if (rect.width <= 0) return index;
+    const ratio = (clientX - rect.left) / rect.width;
+    return getDealDifficultyIndexFromRatio(ratio, maxIndex);
+  };
+
+  track.addEventListener('pointerdown', (event) => {
+    dragging = true;
+    track.setPointerCapture(event.pointerId);
+    setIndex(indexFromClientX(event.clientX));
+  });
+
+  track.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    setIndex(indexFromClientX(event.clientX));
+  });
+
+  const finishDrag = (event) => {
+    if (!dragging) return;
+    dragging = false;
+    if (track.hasPointerCapture(event.pointerId)) {
+      track.releasePointerCapture(event.pointerId);
+    }
+    setIndex(indexFromClientX(event.clientX), { save: true });
+  };
+
+  track.addEventListener('pointerup', finishDrag);
+  track.addEventListener('pointercancel', (event) => {
+    if (!dragging) return;
+    dragging = false;
+    if (track.hasPointerCapture(event.pointerId)) {
+      track.releasePointerCapture(event.pointerId);
+    }
+  });
+
+  ticks.forEach((tick) => {
+    tick.addEventListener('click', () => {
+      setIndex(tick.dataset.index, { save: true });
+    });
+  });
+
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      setIndex(index - 1, { save: true });
+    }
+    if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      setIndex(index + 1, { save: true });
+    }
+  });
+
+  return {
+    getIndex: () => index,
+    getValue: () => getDealDifficultyValue(index),
+    setValue(value) {
+      setIndex(getDealDifficultyIndex(value));
+    },
+  };
 }
