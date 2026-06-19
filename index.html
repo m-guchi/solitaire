@@ -130,15 +130,15 @@
           document.querySelector('.start-logo-svg').src = assetUrl('assets/icon-192.png?v=6');
         </script>
         <div class="start-play-actions">
+          <button type="button" id="btn-start-new" class="btn btn-start-play btn-start-play--new">
+            <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <span class="btn-start-play-label">新しく始める</span>
+          </button>
           <button type="button" id="btn-resume" class="btn btn-start-play hidden">
             <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
             <span class="btn-start-play-label">続きから再開</span>
           </button>
           <p id="start-resume-hint" class="start-resume-hint hidden"></p>
-          <button type="button" id="btn-start-new" class="btn btn-start-play btn-start-play--new">
-            <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            <span class="btn-start-play-label">新しく始める</span>
-          </button>
         </div>
         <div class="start-actions">
           <button type="button" id="btn-start-records" class="btn btn-start-secondary">

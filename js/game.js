@@ -789,8 +789,9 @@ class SolitaireUI {
 
     this.btnResume.classList.toggle('hidden', !canResume);
     this.startResumeHint.classList.toggle('hidden', !canResume);
-    this.btnStartNew.classList.toggle('btn-start-play--secondary', canResume);
+    this.btnStartNew.classList.remove('btn-start-play--secondary');
     this.btnStartNew.classList.toggle('btn-start-play--solo', !canResume);
+    this.btnResume.classList.toggle('btn-start-play--secondary', canResume);
 
     if (canResume) {
       const { moves, elapsed } = getSavedGameSummary(saved);
