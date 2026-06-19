@@ -27,6 +27,8 @@ export function serializeGame(game) {
     won: game.won,
     score: game.score,
     vegasCumulativeBase: game.vegasCumulativeBase ?? 0,
+    cumulativeVegas: game.cumulativeVegas ?? false,
+    dealDifficulty: game.dealDifficulty ?? 'normal',
     history: game.history,
     playTimeMs: game.getPlayTimeMs(),
     vegasMode: game.vegasMode,
@@ -70,6 +72,8 @@ export function applySavedGame(game, saved) {
   game.playTimeMs = resolvePlayTimeMs(saved);
   game.playTimeAnchor = null;
   game.vegasMode = saved.vegasMode ?? false;
+  game.cumulativeVegas = saved.cumulativeVegas ?? false;
+  game.dealDifficulty = saved.dealDifficulty ?? 'normal';
   if (saved.vegasCumulativeBase != null && Number.isFinite(saved.vegasCumulativeBase)) {
     game.vegasCumulativeBase = saved.vegasCumulativeBase;
   }

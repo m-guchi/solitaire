@@ -22,7 +22,10 @@
       write('<link rel="icon" href="' + assetUrl('assets/favicon-32.png?v=6') + '" type="image/png" sizes="32x32">');
       write('<link rel="apple-touch-icon" href="' + assetUrl('assets/apple-touch-icon.png?v=6') + '">');
       write('<link rel="manifest" href="' + assetUrl('manifest.webmanifest') + '">');
-      write('<link rel="stylesheet" href="' + assetUrl('styles.css?v=1.3.1') + '">');
+      write('<link rel="stylesheet" href="' + assetUrl('styles.css?v=1.4.0') + '">');
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(assetUrl('sw.js'), { scope: basePath }).catch(function () {});
+      }
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -36,10 +39,10 @@
   <div id="app">
     <header class="header">
       <div class="header-top">
-        <h1 class="app-title">
+        <button type="button" id="btn-home" class="app-title" aria-label="ホーム画面に戻る" disabled>
           <img class="app-title-icon" width="20" height="20" alt="">
           <span>Solitaire</span>
-        </h1>
+        </button>
         <div class="stats">
           <span id="stat-moves">0 手</span>
           <span class="stats-sep" aria-hidden="true">·</span>
@@ -123,19 +126,23 @@
           <p class="start-tagline">Klondike</p>
         </div>
         <script>
-          document.querySelector('.app-title-icon').src = assetUrl('assets/favicon-32.png?v=6');
-          document.querySelector('.start-logo-svg').src = assetUrl('assets/icon-192.png?v=6');
+          (function () {
+            var icon = document.querySelector('.app-title-icon');
+            if (icon) icon.src = assetUrl('assets/favicon-32.png?v=6');
+            var logo = document.querySelector('.start-logo-svg');
+            if (logo) logo.src = assetUrl('assets/icon-192.png?v=6');
+          })();
         </script>
         <div class="start-play-actions">
+          <button type="button" id="btn-start-new" class="btn btn-start-play btn-start-play--new">
+            <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <span class="btn-start-play-label">新しく始める</span>
+          </button>
           <button type="button" id="btn-resume" class="btn btn-start-play hidden">
             <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
             <span class="btn-start-play-label">続きから再開</span>
           </button>
           <p id="start-resume-hint" class="start-resume-hint hidden"></p>
-          <button type="button" id="btn-start-new" class="btn btn-start-play btn-start-play--new">
-            <svg class="btn-start-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-            <span class="btn-start-play-label">新しく始める</span>
-          </button>
         </div>
         <div class="start-actions">
           <button type="button" id="btn-start-records" class="btn btn-start-secondary">
@@ -151,7 +158,10 @@
             設定
           </button>
         </div>
-        <button type="button" id="start-version" class="start-version" aria-label="更新履歴を表示"></button>
+        <div class="start-footer">
+          <button type="button" id="start-version" class="start-version" aria-label="更新履歴を表示"></button>
+          <button type="button" id="start-install-link" class="start-install-link hidden" aria-label="ホーム画面への追加方法を表示">ホーム画面に追加</button>
+        </div>
       </div>
     </div>
 
@@ -159,7 +169,18 @@
       <div class="overlay-content">
         <h2 id="win-title">おめでとう！</h2>
         <p id="win-stats"></p>
-        <button type="button" id="btn-play-again" class="btn btn-play-again">もう一度</button>
+        <button type="button" id="btn-play-again" class="btn-play-again">もう一度</button>
+      </div>
+    </div>
+
+    <div id="new-game-overlay" class="overlay hidden" role="dialog" aria-labelledby="new-game-title" aria-describedby="new-game-message">
+      <div class="overlay-content overlay-content--confirm">
+        <h2 id="new-game-title">新しいゲーム</h2>
+        <p id="new-game-message" class="overlay-message">進行中のゲームは失われます。新しいゲームを始めますか？</p>
+        <div class="overlay-confirm-actions">
+          <button type="button" id="btn-new-game-confirm" class="btn-play-again">新しいゲームを始める</button>
+          <button type="button" id="btn-new-game-cancel" class="btn-overlay-close">キャンセル</button>
+        </div>
       </div>
     </div>
 
@@ -195,6 +216,7 @@
     <div id="settings-overlay" class="overlay hidden" role="dialog" aria-labelledby="settings-title">
       <div class="overlay-content overlay-content--settings">
         <h2 id="settings-title">設定</h2>
+        <p id="settings-mode-notice" class="settings-mode-notice hidden"></p>
         <ul class="settings-list">
           <li class="setting-row">
             <span class="setting-label">サウンド</span>
@@ -239,18 +261,39 @@
             </div>
             <button type="button" id="btn-vegas-score-reset" class="btn-setting-reset">点数をリセット</button>
           </li>
-          <li class="setting-row">
-            <span class="setting-label">配札の難易度</span>
-            <div class="setting-controls">
-              <button type="button" class="setting-help-btn" data-setting-help="dealDifficulty" aria-label="配札の難易度の説明">
-                <svg class="setting-help-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-              </button>
-              <select id="setting-deal-difficulty" class="setting-select" aria-label="配札の難易度">
-                <option value="easy">やさしい</option>
-                <option value="normal">通常</option>
-                <option value="hard">難しい</option>
-                <option value="veryHard">とても難しい</option>
-              </select>
+          <li class="setting-row setting-row--difficulty">
+            <div class="setting-difficulty-top">
+              <span class="setting-label">配札の難易度</span>
+              <div class="setting-controls">
+                <button type="button" class="setting-help-btn" data-setting-help="dealDifficulty" aria-label="配札の難易度の説明">
+                  <svg class="setting-help-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                </button>
+                <span id="setting-deal-difficulty-label" class="setting-difficulty-value" aria-live="polite">通常</span>
+              </div>
+            </div>
+            <div class="setting-difficulty-slider-wrap">
+              <div
+                id="setting-deal-difficulty"
+                class="setting-difficulty-control"
+                role="slider"
+                tabindex="0"
+                aria-label="配札の難易度"
+                aria-valuemin="0"
+                aria-valuemax="3"
+                aria-valuenow="1"
+                aria-valuetext="通常"
+              >
+                <div class="setting-difficulty-track">
+                  <div class="setting-difficulty-fill"></div>
+                  <div class="setting-difficulty-thumb"></div>
+                </div>
+                <div class="setting-difficulty-ticks">
+                  <button type="button" class="setting-difficulty-tick" data-index="0">やさしい</button>
+                  <button type="button" class="setting-difficulty-tick" data-index="1">通常</button>
+                  <button type="button" class="setting-difficulty-tick" data-index="2">難しい</button>
+                  <button type="button" class="setting-difficulty-tick" data-index="3">とても難しい</button>
+                </div>
+              </div>
             </div>
           </li>
           <li class="setting-row">
@@ -277,6 +320,14 @@
         <button type="button" id="btn-setting-help-close" class="btn btn-primary">閉じる</button>
       </div>
     </div>
+    <div id="install-overlay" class="overlay hidden" role="dialog" aria-labelledby="install-title">
+      <div class="overlay-content overlay-content--setting-help">
+        <h2 id="install-title">ホーム画面に追加</h2>
+        <ol id="install-steps" class="install-steps"></ol>
+        <p id="install-note" class="install-note hidden"></p>
+        <button type="button" id="btn-install-close" class="btn btn-primary">閉じる</button>
+      </div>
+    </div>
     <div id="changelog-overlay" class="overlay hidden" role="dialog" aria-labelledby="changelog-title">
       <div class="overlay-content overlay-content--changelog">
         <h2 id="changelog-title">更新履歴</h2>
@@ -296,7 +347,7 @@
     (function () {
       var script = document.createElement('script');
       script.type = 'module';
-      script.src = assetUrl('js/game.js?v=1.3.1');
+      script.src = assetUrl('js/game.js?v=1.4.0');
       document.body.appendChild(script);
     })();
   </script>
