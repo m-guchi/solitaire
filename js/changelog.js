@@ -1,5 +1,5 @@
 /** package.json の version が正。npm version / npm run release:* で自動同期される */
-export const APP_VERSION = '1.3.1';
+export const APP_VERSION = '1.4.0';
 
 /**
  * アプリ内「更新履歴」に表示するデータ。
@@ -11,6 +11,15 @@ export const APP_VERSION = '1.3.1';
  * 新しい順。リリース時に先頭へ追記してください。
  */
 export const CHANGELOG = [
+  {
+    version: '1.4.0',
+    date: '2026-06-19',
+    changes: [
+      'スタート画面で「新しく始める」を上、「続きから再開」を下に配置',
+      '左下の「新しいゲーム」操作時に確認画面を表示',
+      '難易度スライダーをタップしても設定が反映されないことがある不具合を修正',
+    ],
+  },
   {
     version: '1.3.1',
     date: '2026-06-19',
