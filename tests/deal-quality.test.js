@@ -4,8 +4,10 @@ import {
   buildLayoutFromDeck,
   countFoundationMoves,
   selectDealLayout,
-  MIN_FOUNDATION_MOVES,
-  CUMULATIVE_TRIAL_COUNT,
+  estimateVegasScoreFromFoundationMoves,
+  foundationMovesFromVegasScore,
+  getDealDifficultyScoreTarget,
+  DEAL_DIFFICULTY_SCORE_TARGETS,
 } from '../js/deal-quality.js';
 import { createDeck } from '../js/rules.js';
 
@@ -19,26 +21,36 @@ describe('countFoundationMoves', () => {
   });
 });
 
-describe('selectDealLayout', () => {
-  it('returns deals with at least the minimum foundation moves when possible', () => {
-    const layout = selectDealLayout({ vegasMode: true });
-    const moves = countFoundationMoves(layout, true);
-    assert.ok(moves >= MIN_FOUNDATION_MOVES);
+describe('deal difficulty scoring', () => {
+  it('maps vegas score targets to foundation moves', () => {
+    assert.equal(estimateVegasScoreFromFoundationMoves(12), 8);
+    assert.equal(estimateVegasScoreFromFoundationMoves(10.4), 0);
+    assert.equal(estimateVegasScoreFromFoundationMoves(5), -27);
+    assert.equal(foundationMovesFromVegasScore(10), 12.4);
+    assert.equal(foundationMovesFromVegasScore(0), 10.4);
+    assert.equal(foundationMovesFromVegasScore(-25), 5.4);
   });
 
-  it('returns a valid layout when cumulative score is negative', () => {
-    const layout = selectDealLayout({
-      vegasMode: true,
-      cumulativeVegas: true,
-      storedVegasScore: -100,
-    });
-    const moves = countFoundationMoves(layout, true);
+  it('exposes configured score targets', () => {
+    assert.equal(getDealDifficultyScoreTarget('easy'), DEAL_DIFFICULTY_SCORE_TARGETS.easy);
+    assert.equal(getDealDifficultyScoreTarget('normal'), 0);
+    assert.equal(getDealDifficultyScoreTarget('hard'), -25);
+    assert.equal(getDealDifficultyScoreTarget('veryHard'), null);
+  });
+});
+
+describe('selectDealLayout', () => {
+  it('returns a valid layout for very hard mode', () => {
+    const layout = selectDealLayout({ vegasMode: true, dealDifficulty: 'veryHard' });
     assert.ok(layout.tableau.length === 7);
     assert.ok(layout.stock.length === 24);
-    assert.ok(moves >= MIN_FOUNDATION_MOVES);
   });
 
-  it('exports cumulative trial count constant', () => {
-    assert.equal(CUMULATIVE_TRIAL_COUNT, 3);
+  it('targets higher estimated scores for easy than hard', () => {
+    const easyLayout = selectDealLayout({ vegasMode: true, dealDifficulty: 'easy' });
+    const hardLayout = selectDealLayout({ vegasMode: true, dealDifficulty: 'hard' });
+    const easyScore = estimateVegasScoreFromFoundationMoves(countFoundationMoves(easyLayout, true));
+    const hardScore = estimateVegasScoreFromFoundationMoves(countFoundationMoves(hardLayout, true));
+    assert.ok(easyScore > hardScore);
   });
 });
