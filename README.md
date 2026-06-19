@@ -79,6 +79,16 @@ Alias /solitaire /var/www/html/solitaire
 2. 静的ファイル（`index.html`, `styles.css`, `js/`, `assets/` など）を `dist/` にまとめる
 3. rsync でサーバーの `DEPLOY_PATH` へ転送（`--delete` で古いファイルを削除）
 
+## 更新履歴（`js/changelog.js`）
+
+リリース時は `npm version`（または `npm run release:*`）でバージョンを上げ、`npm run build` で先頭に新しいエントリが追加されます。
+
+- ユーザーが画面で体感できる変更のみを書く
+- 過去バージョンのエントリは**変更しない**（誤記の修正も新バージョンで追記する）
+- 自動追加された `（更新内容を記入してください）` はリリース前に必ず置き換える
+
+詳細は `js/changelog.js` 先頭の記載ルールを参照してください。
+
 ## スクリプト
 
 | コマンド | 説明 |
