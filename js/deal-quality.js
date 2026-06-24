@@ -294,6 +294,37 @@ export function getDealDifficultyScoreTarget(dealDifficulty) {
   return DEAL_DIFFICULTY_SCORE_TARGETS[dealDifficulty] ?? DEAL_DIFFICULTY_SCORE_TARGETS.normal;
 }
 
+function distinctBandScoreCount(candidates) {
+  return new Set(candidates.map((candidate) => estimateVegasScoreFromFoundationMoves(candidate.moves))).size;
+}
+
+function isBandSearchComplete(candidates) {
+  return candidates.length >= MIN_BAND_CANDIDATES
+    && distinctBandScoreCount(candidates) >= 2;
+}
+
+function pickLayoutFromBand(candidates) {
+  const byScore = new Map();
+  for (const candidate of candidates) {
+    const score = estimateVegasScoreFromFoundationMoves(candidate.moves);
+    if (!byScore.has(score)) byScore.set(score, []);
+    byScore.get(score).push(candidate);
+  }
+  const scoreKeys = [...byScore.keys()];
+  const pool = byScore.get(scoreKeys[Math.floor(Math.random() * scoreKeys.length)]);
+  return pool[Math.floor(Math.random() * pool.length)].layout;
+}
+
+function resolveDealSearchResult({ bandCandidates, best }) {
+  if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+    return pickLayoutFromBand(bandCandidates);
+  }
+  if (bandCandidates.length > 0) {
+    return bandCandidates[0].layout;
+  }
+  return best.layout;
+}
+
 function pickDealFromSearch({ scoreTarget, vegasMode }) {
   const bandCandidates = [];
   let best = null;
@@ -311,21 +342,13 @@ function pickDealFromSearch({ scoreTarget, vegasMode }) {
 
     if (scoreDistance <= SCORE_BAND_HALF_WIDTH) {
       bandCandidates.push(candidate);
-      if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+      if (isBandSearchComplete(bandCandidates)) {
         break;
       }
     }
   }
 
-  if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
-    return bandCandidates[Math.floor(Math.random() * bandCandidates.length)].layout;
-  }
-
-  if (bandCandidates.length > 0) {
-    return bandCandidates[0].layout;
-  }
-
-  return best.layout;
+  return resolveDealSearchResult({ bandCandidates, best });
 }
 
 const DEAL_SEARCH_YIELD_EVERY = 4;
@@ -367,7 +390,7 @@ export async function selectDealLayoutAsync({ vegasMode = false, dealDifficulty 
 
     if (scoreDistance <= SCORE_BAND_HALF_WIDTH) {
       bandCandidates.push(candidate);
-      if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+      if (isBandSearchComplete(bandCandidates)) {
         break;
       }
     }
@@ -377,13 +400,5 @@ export async function selectDealLayoutAsync({ vegasMode = false, dealDifficulty 
     }
   }
 
-  if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
-    return bandCandidates[Math.floor(Math.random() * bandCandidates.length)].layout;
-  }
-
-  if (bandCandidates.length > 0) {
-    return bandCandidates[0].layout;
-  }
-
-  return best.layout;
+  return resolveDealSearchResult({ bandCandidates, best });
 }

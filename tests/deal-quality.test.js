@@ -62,7 +62,7 @@ describe('selectDealLayout', () => {
 
   it('varies hard deals within the score band', () => {
     const scores = new Set();
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       const layout = selectDealLayout({ vegasMode: true, dealDifficulty: 'hard' });
       scores.add(estimateVegasScoreFromFoundationMoves(countFoundationMoves(layout, true)));
     }
