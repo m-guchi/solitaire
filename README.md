@@ -39,7 +39,10 @@ GitHub リポジトリには **1つだけ** シークレットを登録します
 
 `main` ブランチへのプッシュで、ビルド → SSH デプロイが自動実行されます。デプロイに必要な SSH 情報はすべて 1Password から取得されます。
 
-**Discord 通知（CI / デプロイ）:** デプロイ結果は Discord に通知されます。設定手順・フォーマットの詳細は [apps/.github/README.md](../.github/README.md)（Discord 通知設定）を参照してください。
+**Discord 通知（CI / デプロイ）:** CI 結果とデプロイ結果を Discord に通知します。設定手順・フォーマットの詳細は [apps/.github/README.md](../.github/README.md)（Discord 通知設定）を参照してください。
+
+- **CI:** `develop` への push は失敗時のみ、`main` 向け PR は成功・失敗・キャンセルを通知
+- **デプロイ / リリース:** `main` への push 後に結果を通知
 
 ### 3. サーバー側の準備
 
