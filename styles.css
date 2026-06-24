@@ -128,6 +128,59 @@ body {
   display: none;
 }
 
+.deal-preparing-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 10px 16px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.deal-preparing-bar.hidden {
+  display: none;
+}
+
+.deal-preparing-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: start-resume-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+body.is-deal-preparing .stock-pile .pile-inner > .card {
+  animation: deal-preparing-stock-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes deal-preparing-stock-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.82;
+    transform: scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-preparing-spinner {
+    animation: none;
+    opacity: 0.75;
+  }
+
+  body.is-deal-preparing .stock-pile .pile-inner > .card {
+    animation: none;
+  }
+}
+
 .app-update-bar {
   display: flex;
   align-items: center;
