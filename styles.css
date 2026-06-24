@@ -1543,6 +1543,51 @@ body.on-start-screen .bottom-nav-btn {
   display: none;
 }
 
+.start-resume-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 10px;
+  padding: 14px 20px;
+  background: #fff;
+  color: #718096;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.start-resume-loading.hidden {
+  display: none;
+}
+
+.start-resume-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e2e8f0;
+  border-top-color: var(--felt);
+  border-radius: 50%;
+  animation: start-resume-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes start-resume-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .start-resume-loading-spinner {
+    animation: none;
+    border-top-color: var(--felt);
+    opacity: 0.75;
+  }
+}
+
 .btn-start-play {
   display: flex;
   align-items: center;

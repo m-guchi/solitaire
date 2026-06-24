@@ -619,7 +619,9 @@ class SolitaireUI {
     this.btnPlayAgain = document.getElementById('btn-play-again');
     this.btnResume = document.getElementById('btn-resume');
     this.btnStartNew = document.getElementById('btn-start-new');
+    this.startResumeLoading = document.getElementById('start-resume-loading');
     this.startResumeHint = document.getElementById('start-resume-hint');
+    this._resumeCheckToken = 0;
     this.btnStartRecords = document.getElementById('btn-start-records');
     this.btnStartRanking = document.getElementById('btn-start-ranking');
     this.btnStartSettings = document.getElementById('btn-start-settings');
@@ -822,10 +824,18 @@ class SolitaireUI {
     saveGame(this.game);
   }
 
-  updateStartScreenActions() {
-    const saved = loadSavedGame();
+  setResumeLoading(loading) {
+    this.startResumeLoading?.classList.toggle('hidden', !loading);
+    if (loading) {
+      this.btnResume.classList.add('hidden');
+      this.startResumeHint.classList.add('hidden');
+    }
+  }
+
+  applyResumeState(saved) {
     const canResume = saved != null;
 
+    this.setResumeLoading(false);
     this.btnResume.classList.toggle('hidden', !canResume);
     this.startResumeHint.classList.toggle('hidden', !canResume);
     this.btnStartNew.classList.remove('btn-start-play--secondary');
@@ -836,6 +846,26 @@ class SolitaireUI {
       const { moves, elapsed } = getSavedGameSummary(saved);
       this.startResumeHint.textContent = `${moves} 手 · ${formatTime(elapsed)}`;
     }
+  }
+
+  beginResumeCheck() {
+    this._resumeCheckToken += 1;
+    this.setResumeLoading(true);
+  }
+
+  finishResumeCheck() {
+    const token = this._resumeCheckToken;
+    requestAnimationFrame(() => {
+      if (token !== this._resumeCheckToken) return;
+      const saved = loadSavedGame();
+      if (token !== this._resumeCheckToken) return;
+      this.applyResumeState(saved);
+    });
+  }
+
+  updateStartScreenActions() {
+    this.beginResumeCheck();
+    this.finishResumeCheck();
   }
 
   enterGame() {
@@ -1340,6 +1370,7 @@ class SolitaireUI {
 
   renderStartScreen() {
     document.body.classList.add('on-start-screen');
+    this.beginResumeCheck();
     if (this.startVersion) {
       this.startVersion.textContent = `v${APP_VERSION}`;
     }
@@ -1358,7 +1389,7 @@ class SolitaireUI {
     this.updateScoreDisplay();
     this.updateBottomNav();
     this.autoCompleteBar.classList.add('hidden');
-    this.updateStartScreenActions();
+    this.finishResumeCheck();
     this.appUpdate?.syncBarVisibility();
   }
 
