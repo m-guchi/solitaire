@@ -1,12 +1,12 @@
-const CACHE_VERSION = '1.4.3';
+const CACHE_VERSION = '1.4.4';
 const CACHE_NAME = `solitaire-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
   './',
   './index.html',
-  './styles.css?v=1.4.3',
+  './styles.css?v=1.4.4',
   './manifest.webmanifest',
-  './js/game.js?v=1.4.3',
+  './js/game.js?v=1.4.4',
   './js/app-update.js',
   './js/changelog.js',
   './js/deal-quality.js',
@@ -34,9 +34,9 @@ function isCacheableAsset(request) {
     || pathname.endsWith('/');
 }
 
-function isUnversionedModuleScript(request) {
-  const { pathname, search } = new URL(request.url);
-  return pathname.endsWith('.js') && !/[?&]v=/.test(search);
+function isJavaScriptModule(request) {
+  const { pathname } = new URL(request.url);
+  return pathname.endsWith('.js');
 }
 
 async function openCache() {
@@ -117,7 +117,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (isUnversionedModuleScript(request)) {
+  if (isJavaScriptModule(request)) {
     event.respondWith(networkFirst(request));
     return;
   }

@@ -39,10 +39,10 @@ describe('service worker offline cache', () => {
     assert.match(swSource, new RegExp(`'\\./js/game\\.js\\?v=${pkgVersion}'`));
   });
 
-  it('uses network-first for navigation and unversioned modules', () => {
+  it('uses network-first for navigation and all JavaScript modules', () => {
     assert.match(swSource, /addEventListener\('fetch'/);
     assert.match(swSource, /request\.mode === 'navigate'/);
-    assert.match(swSource, /isUnversionedModuleScript/);
+    assert.match(swSource, /isJavaScriptModule/);
     assert.match(swSource, /async function networkFirst/);
     assert.doesNotMatch(swSource, /ignoreSearch:\s*true/);
     assert.match(swSource, /request\.cache === 'no-store'/);

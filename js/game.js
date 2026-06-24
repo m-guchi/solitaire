@@ -650,11 +650,13 @@ class SolitaireUI {
     this.btnStartNew = document.getElementById('btn-start-new');
     this.startResumeLoading = document.getElementById('start-resume-loading');
     this.startResumeHint = document.getElementById('start-resume-hint');
-    this._resumeCheckToken = 0;
     this.btnStartRecords = document.getElementById('btn-start-records');
     this.btnStartRanking = document.getElementById('btn-start-ranking');
     this.btnStartSettings = document.getElementById('btn-start-settings');
     this.startVersion = document.getElementById('start-version');
+    if (this.startVersion) {
+      this.startVersion.textContent = `v${APP_VERSION}`;
+    }
     this.startInstallLink = document.getElementById('start-install-link');
     this.btnAutoComplete = document.getElementById('btn-auto-complete');
     this.autoCompleteBar = document.getElementById('auto-complete-bar');
@@ -857,8 +859,8 @@ class SolitaireUI {
   setResumeLoading(loading) {
     this.startResumeLoading?.classList.toggle('hidden', !loading);
     if (loading) {
-      this.btnResume.classList.add('hidden');
-      this.startResumeHint.classList.add('hidden');
+      this.btnResume?.classList.add('hidden');
+      this.startResumeHint?.classList.add('hidden');
     }
   }
 
@@ -866,11 +868,11 @@ class SolitaireUI {
     const canResume = saved != null;
 
     this.setResumeLoading(false);
-    this.btnResume.classList.toggle('hidden', !canResume);
-    this.startResumeHint.classList.toggle('hidden', !canResume);
-    this.btnStartNew.classList.remove('btn-start-play--secondary');
-    this.btnStartNew.classList.toggle('btn-start-play--solo', !canResume);
-    this.btnResume.classList.toggle('btn-start-play--secondary', canResume);
+    this.btnResume?.classList.toggle('hidden', !canResume);
+    this.startResumeHint?.classList.toggle('hidden', !canResume);
+    this.btnStartNew?.classList.remove('btn-start-play--secondary');
+    this.btnStartNew?.classList.toggle('btn-start-play--solo', !canResume);
+    this.btnResume?.classList.toggle('btn-start-play--secondary', canResume);
 
     if (canResume) {
       const { moves, elapsed } = getSavedGameSummary(saved);
@@ -878,24 +880,19 @@ class SolitaireUI {
     }
   }
 
-  beginResumeCheck() {
-    this._resumeCheckToken += 1;
+  refreshResumeState() {
     this.setResumeLoading(true);
-  }
-
-  finishResumeCheck() {
-    const token = this._resumeCheckToken;
     requestAnimationFrame(() => {
-      if (token !== this._resumeCheckToken) return;
-      const saved = loadSavedGame();
-      if (token !== this._resumeCheckToken) return;
-      this.applyResumeState(saved);
+      try {
+        this.applyResumeState(loadSavedGame());
+      } catch {
+        this.setResumeLoading(false);
+      }
     });
   }
 
   updateStartScreenActions() {
-    this.beginResumeCheck();
-    this.finishResumeCheck();
+    this.refreshResumeState();
   }
 
   enterGame() {
@@ -1448,7 +1445,6 @@ class SolitaireUI {
 
   renderStartScreen() {
     document.body.classList.add('on-start-screen');
-    this.beginResumeCheck();
     if (this.startVersion) {
       this.startVersion.textContent = `v${APP_VERSION}`;
     }
@@ -1467,7 +1463,7 @@ class SolitaireUI {
     this.updateScoreDisplay();
     this.updateBottomNav();
     this.autoCompleteBar.classList.add('hidden');
-    this.finishResumeCheck();
+    this.refreshResumeState();
     this.appUpdate?.applyPendingUpdate();
   }
 

@@ -20,15 +20,70 @@ function resolveAssetUrl(relativePath) {
   return `${location.origin}${basePath}${String(relativePath).replace(/^\.\//, '')}`;
 }
 
+function reloadAttemptKey(version) {
+  return `solitaire-update-reload-${version}`;
+}
+
+function readSessionItem(key) {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionItem(key, value) {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch {
+    // private browsing など
+  }
+}
+
+function removeSessionItem(key) {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // private browsing など
+  }
+}
+
+function clearUpdateReloadMarker(version) {
+  removeSessionItem(reloadAttemptKey(version));
+}
+
+function hasRecentUpdateReload(version) {
+  return readSessionItem(reloadAttemptKey(version)) === '1';
+}
+
+function markUpdateReload(version) {
+  writeSessionItem(reloadAttemptKey(version), '1');
+}
+
+function stripAppUpdatedParam() {
+  const url = new URL(location.href);
+  if (!url.searchParams.has('appUpdated')) return;
+  url.searchParams.delete('appUpdated');
+  history.replaceState(null, '', url.toString());
+}
+
 export function initAppUpdate(currentVersion, { canApplyUpdate = () => true } = {}) {
   let registration = null;
   let updateTriggered = false;
   let reloadPending = false;
   let pendingUpdate = false;
 
+  stripAppUpdatedParam();
+
   const reloadForUpdate = () => {
     if (reloadPending) return;
+    if (hasRecentUpdateReload(currentVersion)) {
+      clearUpdateReloadMarker(currentVersion);
+      return;
+    }
+
     reloadPending = true;
+    markUpdateReload(currentVersion);
     const url = new URL(location.href);
     url.searchParams.set('appUpdated', Date.now().toString());
     location.replace(url.toString());
@@ -77,7 +132,10 @@ export function initAppUpdate(currentVersion, { canApplyUpdate = () => true } = 
       );
       if (!response.ok) return;
       const remoteVersion = parseAppVersion(await response.text());
-      if (!remoteVersion || remoteVersion === currentVersion) return;
+      if (!remoteVersion || remoteVersion === currentVersion) {
+        clearUpdateReloadMarker(currentVersion);
+        return;
+      }
 
       pendingUpdate = true;
 
