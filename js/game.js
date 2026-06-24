@@ -711,7 +711,7 @@ class SolitaireUI {
     this.bindEvents();
     this.bindPageLifecycle();
     this.appUpdate = initAppUpdate(APP_VERSION, {
-      shouldShowBar: () => !this.gameStarted,
+      canApplyUpdate: () => !this.gameStarted,
     });
     this.startTimer();
     fitLayout();
@@ -902,7 +902,7 @@ class SolitaireUI {
     this.gameStarted = true;
     this.startOverlay.classList.add('hidden');
     document.body.classList.remove('on-start-screen');
-    this.appUpdate?.syncBarVisibility();
+    this.appUpdate?.applyPendingUpdate();
     this.updateBottomNav();
   }
 
@@ -931,7 +931,7 @@ class SolitaireUI {
     this.gameStarted = false;
     this.startOverlay.classList.remove('hidden');
     this.renderStartScreen();
-    this.appUpdate?.syncBarVisibility();
+    this.appUpdate?.applyPendingUpdate();
   }
 
   updateBottomNav() {
@@ -1468,7 +1468,7 @@ class SolitaireUI {
     this.updateBottomNav();
     this.autoCompleteBar.classList.add('hidden');
     this.finishResumeCheck();
-    this.appUpdate?.syncBarVisibility();
+    this.appUpdate?.applyPendingUpdate();
   }
 
   onCardsMoved() {

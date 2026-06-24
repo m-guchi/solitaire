@@ -20,46 +20,54 @@ function resolveAssetUrl(relativePath) {
   return `${location.origin}${basePath}${String(relativePath).replace(/^\.\//, '')}`;
 }
 
-export function initAppUpdate(currentVersion, { shouldShowBar = () => true } = {}) {
-  const bar = document.getElementById('app-update-bar');
-  const button = document.getElementById('btn-app-update');
-  if (!bar || !button) return null;
-
-  let pendingVersion = null;
+export function initAppUpdate(currentVersion, { canApplyUpdate = () => true } = {}) {
   let registration = null;
-  let userRequestedUpdate = false;
-  let updateAvailable = false;
+  let updateTriggered = false;
+  let reloadPending = false;
+  let pendingUpdate = false;
 
-  const syncBarVisibility = () => {
-    bar.classList.toggle('hidden', !updateAvailable || !shouldShowBar());
-  };
-
-  const showBar = (nextVersion = null) => {
-    if (nextVersion) pendingVersion = nextVersion;
-    updateAvailable = true;
-    const message = bar.querySelector('.app-update-message');
-    if (message) {
-      message.textContent = pendingVersion
-        ? `新しいバージョン（v${pendingVersion}）があります`
-        : '新しいバージョンがあります';
-    }
-    syncBarVisibility();
-  };
-
-  const applyUpdate = async () => {
-    userRequestedUpdate = true;
-    if (registration?.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      return;
-    }
+  const reloadForUpdate = () => {
+    if (reloadPending) return;
+    reloadPending = true;
     const url = new URL(location.href);
     url.searchParams.set('appUpdated', Date.now().toString());
     location.replace(url.toString());
   };
 
-  button.addEventListener('click', () => {
-    void applyUpdate();
-  });
+  const activateWaitingWorker = () => {
+    if (!registration?.waiting) return false;
+    updateTriggered = true;
+    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    return true;
+  };
+
+  const tryApplyUpdate = () => {
+    if (!pendingUpdate && !registration?.waiting) return;
+
+    if (!canApplyUpdate()) {
+      pendingUpdate = true;
+      return;
+    }
+
+    pendingUpdate = false;
+
+    if (activateWaitingWorker()) return;
+    reloadForUpdate();
+  };
+
+  const markUpdateReady = () => {
+    pendingUpdate = true;
+    tryApplyUpdate();
+  };
+
+  const trackInstallingWorker = (worker) => {
+    if (!worker) return;
+    worker.addEventListener('statechange', () => {
+      if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+        markUpdateReady();
+      }
+    });
+  };
 
   const checkRemoteVersion = async () => {
     try {
@@ -69,44 +77,50 @@ export function initAppUpdate(currentVersion, { shouldShowBar = () => true } = {
       );
       if (!response.ok) return;
       const remoteVersion = parseAppVersion(await response.text());
-      if (remoteVersion && remoteVersion !== currentVersion) {
-        showBar(remoteVersion);
+      if (!remoteVersion || remoteVersion === currentVersion) return;
+
+      pendingUpdate = true;
+
+      if (registration) {
+        await registration.update().catch(() => {});
+        if (registration.waiting) {
+          tryApplyUpdate();
+          return;
+        }
+        if (registration.installing) {
+          trackInstallingWorker(registration.installing);
+          return;
+        }
       }
+
+      tryApplyUpdate();
     } catch {
       // オフラインなどは無視
     }
   };
 
-  const trackWaitingWorker = (worker) => {
-    if (!worker) return;
-    worker.addEventListener('statechange', () => {
-      if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-        showBar(pendingVersion);
-      }
-    });
-  };
-
   const initServiceWorker = async () => {
-    if (!('serviceWorker' in navigator)) return;
+    if (!('serviceWorker' in navigator)) {
+      void checkRemoteVersion();
+      return;
+    }
 
     try {
       registration = await navigator.serviceWorker.register(resolveAssetUrl('sw.js'), {
         scope: typeof window.getBasePath === 'function' ? window.getBasePath() : getBasePath(),
       });
 
-      if (registration.waiting) {
-        showBar();
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        markUpdateReady();
       }
 
       registration.addEventListener('updatefound', () => {
-        trackWaitingWorker(registration.installing);
+        trackInstallingWorker(registration.installing);
       });
 
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!userRequestedUpdate) return;
-        const url = new URL(location.href);
-        url.searchParams.set('appUpdated', Date.now().toString());
-        location.replace(url.toString());
+        if (!updateTriggered) return;
+        reloadForUpdate();
       });
 
       const refreshRegistration = () => {
@@ -124,10 +138,11 @@ export function initAppUpdate(currentVersion, { shouldShowBar = () => true } = {
     } catch {
       // Service Worker 非対応・スコープエラー時はバージョン確認のみ
     }
+
+    void checkRemoteVersion();
   };
 
   void initServiceWorker();
-  void checkRemoteVersion();
 
-  return { syncBarVisibility };
+  return { applyPendingUpdate: tryApplyUpdate };
 }

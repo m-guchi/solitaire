@@ -181,49 +181,6 @@ body.is-deal-preparing .stock-pile .pile-inner > .card {
   }
 }
 
-.app-update-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  margin-top: 16px;
-  padding: 12px 14px;
-  background: #1a202c;
-  color: #f7fafc;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
-}
-
-.app-update-bar.hidden {
-  display: none;
-}
-
-.app-update-message {
-  margin: 0;
-  font-size: 0.88rem;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.btn-app-update {
-  flex-shrink: 0;
-  min-height: 36px;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 8px;
-  background: #48bb78;
-  color: #fff;
-  font-size: 0.86rem;
-  font-weight: 700;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.btn-app-update:active {
-  background: #38a169;
-}
-
 .btn-play-again {
   display: flex;
   align-items: center;
