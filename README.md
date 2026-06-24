@@ -39,7 +39,10 @@ GitHub リポジトリには **1つだけ** シークレットを登録します
 
 `main` ブランチへのプッシュで、ビルド → SSH デプロイが自動実行されます。デプロイに必要な SSH 情報はすべて 1Password から取得されます。
 
-**Discord 通知（CI / デプロイ）:** デプロイ結果は Discord に通知されます。設定手順・フォーマットの詳細は [apps/.github/README.md](../.github/README.md)（Discord 通知設定）を参照してください。
+**Discord 通知（CI / デプロイ）:** CI 結果とデプロイ結果を Discord に通知します。設定手順・フォーマットの詳細は [apps/.github/README.md](../.github/README.md)（Discord 通知設定）を参照してください。
+
+- **CI:** `develop` への push は失敗時のみ、`main` 向け PR は成功・失敗・キャンセルを通知
+- **デプロイ / リリース:** `main` への push 後に結果を通知
 
 ### 3. サーバー側の準備
 
@@ -75,13 +78,53 @@ Alias /solitaire /var/www/html/solitaire
 
 ## デプロイの流れ
 
-1. `npm run build` で `package.json` のバージョンを `js/changelog.js` に同期
-2. 静的ファイル（`index.html`, `styles.css`, `js/`, `assets/` など）を `dist/` にまとめる
+`main` ブランチへの push で GitHub Actions が次を実行します。
+
+1. `package.json` のバージョンから Git タグ（`v*`）を作成
+2. `npm run build` でバージョンを各ファイルに同期し、静的ファイルをビルド
 3. rsync でサーバーの `DEPLOY_PATH` へ転送（`--delete` で古いファイルを削除）
+4. **デプロイ成功後のみ** GitHub Release を作成
+
+手動でタグを push した場合は `.github/workflows/release.yml` が GitHub Release を作成します（`deploy.yml` 経由のタグ push は GITHUB_TOKEN のため別 workflow は起動しません）。
+
+## リリース手順
+
+`develop` でバージョンを上げてから `main` にマージします。タグは CI が `main` 上で付けるため、ローカルでは **`--no-git-tag-version`** を付けて `package.json` だけ更新してください（ローカルでタグを作ると、マージ後のデプロイが「タグが既に別コミットを指している」として失敗します）。
+
+```bash
+git checkout develop
+git pull
+
+# パッチ（バグ修正）: 1.4.1 → 1.4.2
+npm run release:patch
+
+# マイナー（機能追加）: 1.4.1 → 1.5.0
+npm run release:minor
+
+# メジャー（破壊的変更）: 1.4.1 → 2.0.0
+npm run release:major
+```
+
+`npm run release:*` は `package.json` のバージョンを上げ、`js/changelog.js` / `sw.js` / `index.html` を同期します。先頭に追加された `（更新内容を記入してください）` はコミット前に必ず置き換えてください。
+
+```bash
+git add package.json js/changelog.js sw.js index.html
+git commit -m "chore: release v$(node -p "require('./package.json').version")"
+git push origin develop
+
+# PR を作成して main にマージ
+```
+
+同じバージョン番号で再デプロイする場合は、先にバージョンを上げてから `main` にマージする必要があります。
+
+| コマンド | 用途 |
+| :--- | :--- |
+| `npm run release:patch` | パッチ版を上げる（`x.y.Z`） |
+| `npm run release:minor` | マイナー版を上げる（`x.Y.0`） |
+| `npm run release:major` | メジャー版を上げる（`X.0.0`） |
+| `node -p "require('./package.json').version"` | 現在のバージョンを表示 |
 
 ## 更新履歴（`js/changelog.js`）
-
-リリース時は `npm version`（または `npm run release:*`）でバージョンを上げ、`npm run build` で先頭に新しいエントリが追加されます。
 
 - ユーザーが画面で体感できる変更のみを書く
 - 過去バージョンのエントリは**変更しない**（誤記の修正も新バージョンで追記する）
@@ -95,4 +138,7 @@ Alias /solitaire /var/www/html/solitaire
 | :--- | :--- |
 | `npm run dev` | ローカル開発サーバー（ポート 8080） |
 | `npm run build` | バージョン同期（CI / デプロイ前） |
+| `npm run release:patch` | パッチ版リリース準備（`package.json` + 同期） |
+| `npm run release:minor` | マイナー版リリース準備 |
+| `npm run release:major` | メジャー版リリース準備 |
 | `npm run icons` | `assets/icon.svg` から favicon / PWA アイコンを生成 |

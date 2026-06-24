@@ -24,7 +24,7 @@ import {
 import { APP_VERSION, CHANGELOG, formatChangelogDate } from './changelog.js';
 import { initAppUpdate } from './app-update.js';
 import { getInstallHelp, shouldShowInstallLink } from './pwa-install.js';
-import { selectDealLayout } from './deal-quality.js';
+import { selectDealLayout, selectDealLayoutAsync } from './deal-quality.js';
 import {
   SUITS,
   cardColor,
@@ -68,6 +68,15 @@ class SolitaireGame {
     this.deal(options);
   }
 
+  async resetAsync(options = {}) {
+    this.clearState();
+    this.vegasMode = options.vegasMode ?? false;
+    this.cumulativeVegas = options.cumulativeVegas ?? false;
+    this.dealDifficulty = options.dealDifficulty ?? 'normal';
+    this.score = 0;
+    await this.dealAsync(options);
+  }
+
   beginVegasRound(options = {}) {
     if (!this.vegasMode) {
       this.score = 0;
@@ -81,7 +90,15 @@ class SolitaireGame {
   deal(options = {}) {
     const layout = selectDealLayout({
       vegasMode: options.vegasMode ?? this.vegasMode,
-      dealDifficulty: options.dealDifficulty ?? 'normal',
+      dealDifficulty: options.dealDifficulty ?? this.dealDifficulty,
+    });
+    this.applyDealLayout(layout);
+  }
+
+  async dealAsync(options = {}) {
+    const layout = await selectDealLayoutAsync({
+      vegasMode: options.vegasMode ?? this.vegasMode,
+      dealDifficulty: options.dealDifficulty ?? this.dealDifficulty,
     });
     this.applyDealLayout(layout);
   }
@@ -465,6 +482,7 @@ function fitLayout() {
   const header = document.querySelector('.header');
   const bottomNav = document.querySelector('.bottom-nav');
   const autoCompleteBar = document.getElementById('auto-complete-bar');
+  const dealPreparingBar = document.getElementById('deal-preparing-bar');
   const topRow = document.querySelector('.top-row');
   if (!board || !header) return false;
 
@@ -495,6 +513,10 @@ function fitLayout() {
     autoCompleteBar && !autoCompleteBar.classList.contains('hidden')
       ? autoCompleteBar.getBoundingClientRect().height
       : 0;
+  const dealPreparingBarHeight =
+    dealPreparingBar && !dealPreparingBar.classList.contains('hidden')
+      ? dealPreparingBar.getBoundingClientRect().height
+      : 0;
   const topRowHeight = topRow ? topRow.getBoundingClientRect().height : cardHeight + 6;
   const boardPad = parseFloat(boardStyle.paddingTop) + parseFloat(boardStyle.paddingBottom);
   const tableauAvailable =
@@ -502,6 +524,7 @@ function fitLayout() {
     headerHeight -
     bottomNavHeight -
     autoCompleteBarHeight -
+    dealPreparingBarHeight -
     topRowHeight -
     safeTop -
     boardPad -
@@ -586,6 +609,12 @@ function buildDealSteps(tableau) {
   return steps;
 }
 
+function yieldToMain() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
+}
+
 function bindClick(element, listener) {
   element?.addEventListener('click', listener);
 }
@@ -619,7 +648,9 @@ class SolitaireUI {
     this.btnPlayAgain = document.getElementById('btn-play-again');
     this.btnResume = document.getElementById('btn-resume');
     this.btnStartNew = document.getElementById('btn-start-new');
+    this.startResumeLoading = document.getElementById('start-resume-loading');
     this.startResumeHint = document.getElementById('start-resume-hint');
+    this._resumeCheckToken = 0;
     this.btnStartRecords = document.getElementById('btn-start-records');
     this.btnStartRanking = document.getElementById('btn-start-ranking');
     this.btnStartSettings = document.getElementById('btn-start-settings');
@@ -627,6 +658,7 @@ class SolitaireUI {
     this.startInstallLink = document.getElementById('start-install-link');
     this.btnAutoComplete = document.getElementById('btn-auto-complete');
     this.autoCompleteBar = document.getElementById('auto-complete-bar');
+    this.dealPreparingBar = document.getElementById('deal-preparing-bar');
     this.btnRankingClose = document.getElementById('btn-ranking-close');
     this.btnRecordsClose = document.getElementById('btn-records-close');
     this.btnRecordsReset = document.getElementById('btn-records-reset');
@@ -822,10 +854,18 @@ class SolitaireUI {
     saveGame(this.game);
   }
 
-  updateStartScreenActions() {
-    const saved = loadSavedGame();
+  setResumeLoading(loading) {
+    this.startResumeLoading?.classList.toggle('hidden', !loading);
+    if (loading) {
+      this.btnResume.classList.add('hidden');
+      this.startResumeHint.classList.add('hidden');
+    }
+  }
+
+  applyResumeState(saved) {
     const canResume = saved != null;
 
+    this.setResumeLoading(false);
     this.btnResume.classList.toggle('hidden', !canResume);
     this.startResumeHint.classList.toggle('hidden', !canResume);
     this.btnStartNew.classList.remove('btn-start-play--secondary');
@@ -836,6 +876,26 @@ class SolitaireUI {
       const { moves, elapsed } = getSavedGameSummary(saved);
       this.startResumeHint.textContent = `${moves} 手 · ${formatTime(elapsed)}`;
     }
+  }
+
+  beginResumeCheck() {
+    this._resumeCheckToken += 1;
+    this.setResumeLoading(true);
+  }
+
+  finishResumeCheck() {
+    const token = this._resumeCheckToken;
+    requestAnimationFrame(() => {
+      if (token !== this._resumeCheckToken) return;
+      const saved = loadSavedGame();
+      if (token !== this._resumeCheckToken) return;
+      this.applyResumeState(saved);
+    });
+  }
+
+  updateStartScreenActions() {
+    this.beginResumeCheck();
+    this.finishResumeCheck();
   }
 
   enterGame() {
@@ -924,7 +984,6 @@ class SolitaireUI {
     this.sounds.unlock();
     this.winRecorded = false;
     this.enterGame();
-    this.game.reset(this.getResetOptions());
     void this.animateNewGame({ reshuffle: false });
   }
 
@@ -1272,16 +1331,64 @@ class SolitaireUI {
     void this.animateNewGame({ reshuffle: true });
   }
 
+  beginDealPreparing() {
+    this.game.pausePlayTime();
+    this.clearSelection();
+    this.winRecorded = false;
+    this.winOverlay.classList.add('hidden');
+
+    this.animatingDeal = true;
+    document.body.classList.add('is-deal-animating', 'is-deal-preparing');
+    this.autoCompleteBar.classList.add('hidden');
+    this.dealPreparingBar?.classList.remove('hidden');
+
+    this.game.moves = 0;
+    this.game.playTimeMs = 0;
+    this.game.playTimeAnchor = null;
+    this.game.won = false;
+    this.game.history = [];
+    this.game.stock = [];
+    this.game.waste = [];
+    this.game.foundations = [[], [], [], []];
+    this.game.tableau = [[], [], [], [], [], [], []];
+
+    this.renderPreDealBoard();
+    this.updateBottomNav();
+  }
+
+  endDealPreparing() {
+    document.body.classList.remove('is-deal-preparing');
+    this.dealPreparingBar?.classList.add('hidden');
+  }
+
+  renderPreDealBoard() {
+    fitLayout();
+    const stockPlaceholder = [{ suit: 'spades', value: 1, faceUp: false }];
+    this.renderPile('stock', stockPlaceholder, { stockDisplayCount: 24 });
+    this.renderPile('waste', []);
+    SUITS.forEach((suit, i) => {
+      this.renderPile(`foundation-${i}`, [], { placeholder: true, suit });
+    });
+    for (let i = 0; i < 7; i++) {
+      this.renderPile(`tableau-${i}`, []);
+    }
+    this.statMoves.textContent = '0 手';
+    this.statTime.textContent = '00:00';
+    this.updateScoreDisplay();
+  }
+
   async animateNewGame({ reshuffle = true } = {}) {
     if (this.animatingDeal || this.animatingStock || this.autoCompleting) return;
 
     if (reshuffle) {
       clearSavedGame();
-      this.game.reset(this.getResetOptions());
-      this.clearSelection();
-      this.winRecorded = false;
-      this.winOverlay.classList.add('hidden');
     }
+
+    this.beginDealPreparing();
+    await yieldToMain();
+
+    await this.game.resetAsync(this.getResetOptions());
+    this.endDealPreparing();
 
     this.game.beginVegasRound(this.getResetOptions());
     recordGamePlayed(resolveClearMode(getActiveGameMode(this.game)));
@@ -1293,11 +1400,12 @@ class SolitaireUI {
       this.game.resumePlayTime();
       this.render();
       this.persistGameSave();
+      this.animatingDeal = false;
+      document.body.classList.remove('is-deal-animating');
+      this.updateBottomNav();
       return;
     }
 
-    this.animatingDeal = true;
-    document.body.classList.add('is-deal-animating');
     this.updateBottomNav();
     this.persistGameSave();
 
@@ -1340,6 +1448,7 @@ class SolitaireUI {
 
   renderStartScreen() {
     document.body.classList.add('on-start-screen');
+    this.beginResumeCheck();
     if (this.startVersion) {
       this.startVersion.textContent = `v${APP_VERSION}`;
     }
@@ -1358,7 +1467,7 @@ class SolitaireUI {
     this.updateScoreDisplay();
     this.updateBottomNav();
     this.autoCompleteBar.classList.add('hidden');
-    this.updateStartScreenActions();
+    this.finishResumeCheck();
     this.appUpdate?.syncBarVisibility();
   }
 

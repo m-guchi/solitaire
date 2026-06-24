@@ -294,7 +294,58 @@ export function getDealDifficultyScoreTarget(dealDifficulty) {
   return DEAL_DIFFICULTY_SCORE_TARGETS[dealDifficulty] ?? DEAL_DIFFICULTY_SCORE_TARGETS.normal;
 }
 
+function pickDealFromSearch({ scoreTarget, vegasMode }) {
+  const bandCandidates = [];
+  let best = null;
+  let bestScoreDistance = Infinity;
+
+  for (let attempts = 0; attempts < MAX_SEARCH_ATTEMPTS; attempts++) {
+    const candidate = evaluateShuffledDeal(vegasMode);
+    const estimatedScore = estimateVegasScoreFromFoundationMoves(candidate.moves);
+    const scoreDistance = Math.abs(estimatedScore - scoreTarget);
+
+    if (scoreDistance < bestScoreDistance) {
+      bestScoreDistance = scoreDistance;
+      best = candidate;
+    }
+
+    if (scoreDistance <= SCORE_BAND_HALF_WIDTH) {
+      bandCandidates.push(candidate);
+      if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+        break;
+      }
+    }
+  }
+
+  if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+    return bandCandidates[Math.floor(Math.random() * bandCandidates.length)].layout;
+  }
+
+  if (bandCandidates.length > 0) {
+    return bandCandidates[0].layout;
+  }
+
+  return best.layout;
+}
+
+const DEAL_SEARCH_YIELD_EVERY = 4;
+
+function yieldToMain() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
 export function selectDealLayout({ vegasMode = false, dealDifficulty = 'normal' } = {}) {
+  if (dealDifficulty === 'veryHard') {
+    return evaluateShuffledDeal(vegasMode).layout;
+  }
+
+  const scoreTarget = getDealDifficultyScoreTarget(dealDifficulty);
+  return pickDealFromSearch({ scoreTarget, vegasMode });
+}
+
+export async function selectDealLayoutAsync({ vegasMode = false, dealDifficulty = 'normal' } = {}) {
   if (dealDifficulty === 'veryHard') {
     return evaluateShuffledDeal(vegasMode).layout;
   }
@@ -316,6 +367,13 @@ export function selectDealLayout({ vegasMode = false, dealDifficulty = 'normal' 
 
     if (scoreDistance <= SCORE_BAND_HALF_WIDTH) {
       bandCandidates.push(candidate);
+      if (bandCandidates.length >= MIN_BAND_CANDIDATES) {
+        break;
+      }
+    }
+
+    if (attempts % DEAL_SEARCH_YIELD_EVERY === DEAL_SEARCH_YIELD_EVERY - 1) {
+      await yieldToMain();
     }
   }
 
