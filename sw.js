@@ -34,9 +34,9 @@ function isCacheableAsset(request) {
     || pathname.endsWith('/');
 }
 
-function isUnversionedModuleScript(request) {
-  const { pathname, search } = new URL(request.url);
-  return pathname.endsWith('.js') && !/[?&]v=/.test(search);
+function isJavaScriptModule(request) {
+  const { pathname } = new URL(request.url);
+  return pathname.endsWith('.js');
 }
 
 async function openCache() {
@@ -117,7 +117,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (isUnversionedModuleScript(request)) {
+  if (isJavaScriptModule(request)) {
     event.respondWith(networkFirst(request));
     return;
   }
